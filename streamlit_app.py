@@ -3,7 +3,7 @@ import pandas as pd # Import the pandas library, commonly aliased as 'pd', for d
 
 # --- Sample Restaurant Data ---
 # Create a list of dictionaries, where each dictionary represents a restaurant.
-# This serves as our mock database, similar to what you'd fetch from a real API or database.
+# The "Image" field now holds a LIST of image URLs.
 restaurant_data = [
     {
         "Name": "The Dempsey Cookhouse & Bar",
@@ -12,7 +12,12 @@ restaurant_data = [
         "Rating": 4.5,
         "Price Range": "$$$",
         "Description": "Chic restaurant by Jean-Georges Vongerichten, offering a sophisticated dining experience.",
-        "Image": "https://placehold.co/600x400/FF5733/FFFFFF?text=Dempsey+Cookhouse" # Placeholder image URL
+        # Now a list of image URLs
+        "Image": [
+            "https://placehold.co/600x400/FF5733/FFFFFF?text=Dempsey+Cookhouse+1",
+            "https://placehold.co/600x400/FF5733/FFFFFF?text=Dempsey+Cookhouse+2",
+            "https://placehold.co/600x400/FF5733/FFFFFF?text=Dempsey+Cookhouse+3"
+        ]
     },
     {
         "Name": "Odette",
@@ -21,7 +26,10 @@ restaurant_data = [
         "Rating": 5.0,
         "Price Range": "$$$$",
         "Description": "Three Michelin-starred modern French restaurant, known for its exquisite tasting menus.",
-        "Image": "https://placehold.co/600x400/33FF57/000000?text=Odette" # Placeholder image URL
+        "Image": [
+            "https://placehold.co/600x400/33FF57/000000?text=Odette+1",
+            "https://placehold.co/600x400/33FF57/000000?text=Odette+2"
+        ]
     },
     {
         "Name": "Burnt Ends",
@@ -30,7 +38,9 @@ restaurant_data = [
         "Rating": 4.7,
         "Price Range": "$$$",
         "Description": "Modern Australian barbecue with an open-concept kitchen and custom-built ovens.",
-        "Image": "https://placehold.co/600x400/3357FF/FFFFFF?text=Burnt+Ends" # Placeholder image URL
+        "Image": [
+            "https://placehold.co/600x400/3357FF/FFFFFF?text=Burnt+Ends+1"
+        ]
     },
     {
         "Name": "Candlenut",
@@ -39,7 +49,10 @@ restaurant_data = [
         "Rating": 4.3,
         "Price Range": "$$",
         "Description": "The world's first Michelin-starred Peranakan restaurant, offering refined Straits-Chinese cuisine.",
-        "Image": "https://placehold.co/600x400/FF33A1/FFFFFF?text=Candlenut" # Placeholder image URL
+        "Image": [
+            "https://placehold.co/600x400/FF33A1/FFFFFF?text=Candlenut+1",
+            "https://placehold.co/600x400/FF33A1/FFFFFF?text=Candlenut+2"
+        ]
     },
     {
         "Name": "Jumbo Seafood",
@@ -48,7 +61,9 @@ restaurant_data = [
         "Rating": 4.2,
         "Price Range": "$$",
         "Description": "Famous for its Chili Crab and Black Pepper Crab, a must-visit for seafood lovers.",
-        "Image": "https://placehold.co/600x400/A1FF33/000000?text=Jumbo+Seafood" # Placeholder image URL
+        "Image": [
+            "https://placehold.co/600x400/A1FF33/000000?text=Jumbo+Seafood+1"
+        ]
     },
     {
         "Name": "Tiong Bahru Bakery",
@@ -57,7 +72,9 @@ restaurant_data = [
         "Rating": 4.0,
         "Price Range": "$",
         "Description": "Popular spot for freshly baked pastries, coffee, and a relaxed atmosphere.",
-        "Image": "https://placehold.co/600x400/33A1FF/FFFFFF?text=Tiong+Bahru+Bakery" # Placeholder image URL
+        "Image": [
+            "https://placehold.co/600x400/33A1FF/FFFFFF?text=Tiong+Bahru+Bakery+1"
+        ]
     },
     {
         "Name": "Newton Food Centre",
@@ -66,7 +83,9 @@ restaurant_data = [
         "Rating": 3.8,
         "Price Range": "$",
         "Description": "An iconic hawker centre offering a wide variety of local Singaporean dishes.",
-        "Image": "https://placehold.co/600x400/FFBB33/000000?text=Newton+Food+Centre" # Placeholder image URL
+        "Image": [
+            "https://placehold.co/600x400/FFBB33/000000?text=Newton+Food+Centre+1"
+        ]
     },
     {
         "Name": "PS.Cafe Harding Road",
@@ -75,7 +94,9 @@ restaurant_data = [
         "Rating": 4.1,
         "Price Range": "$$",
         "Description": "A popular cafe chain known for its truffle fries, relaxed ambiance, and lush surroundings.",
-        "Image": "https://placehold.co/600x400/BB33FF/FFFFFF?text=PS.Cafe" # Placeholder image URL
+        "Image": [
+            "https://placehold.co/600x400/BB33FF/FFFFFF?text=PS.Cafe+1"
+        ]
     },
     {
         "Name": "National Kitchen by Violet Oon",
@@ -84,7 +105,9 @@ restaurant_data = [
         "Rating": 4.4,
         "Price Range": "$$$",
         "Description": "Elegant restaurant serving classic Peranakan dishes in a grand setting at the National Gallery.",
-        "Image": "https://placehold.co/600x400/33FFBB/000000?text=National+Kitchen" # Placeholder image URL
+        "Image": [
+            "https://placehold.co/600x400/33FFBB/000000?text=National+Kitchen+1"
+        ]
     },
     {
         "Name": "Les Amis",
@@ -93,7 +116,9 @@ restaurant_data = [
         "Rating": 4.9,
         "Price Range": "$$$$",
         "Description": "One of Singapore's oldest independent fine-dining French restaurants, with three Michelin stars.",
-        "Image": "https://placehold.co/600x400/FF3333/FFFFFF?text=Les+Amis" # Placeholder image URL
+        "Image": [
+            "https://placehold.co/600x400/FF3333/FFFFFF?text=Les+Amis+1"
+        ]
     }
 ]
 
@@ -176,7 +201,7 @@ st.markdown(
         height: 200px; /* Fixed height for images */
         object-fit: cover; /* Cover the area, cropping if necessary */
         border-radius: 10px; /* Rounded corners for images */
-        margin-bottom: 15px; /* Space below image */
+        margin-bottom: 10px; /* Smaller space below image if multiple */
     }
 
     .restaurant-name {
@@ -264,16 +289,22 @@ filtered_df = filtered_df[filtered_df["Rating"] >= min_rating] # Filter DataFram
 st.markdown('<h2 class="subheader">Available Restaurants</h2>', unsafe_allow_html=True) # Subheader for the results section.
 
 if not filtered_df.empty: # Check if there are any restaurants after filtering
-    # Use Streamlit columns to create a responsive grid layout for restaurant cards.
-    # The number of columns adjusts based on screen width (3 on large, 2 on medium, 1 on small).
     cols = st.columns(3) # Create 3 columns for displaying restaurant cards.
     col_index = 0 # Initialize column index for distributing cards.
 
     for index, row in filtered_df.iterrows(): # Iterate over each row (restaurant) in the filtered DataFrame.
         with cols[col_index]: # Place the content in the current column.
-            st.markdown(f"""
+            # Start building the HTML for the restaurant card
+            card_html = f"""
             <div class="restaurant-card">
-                <img src="{row['Image']}" alt="{row['Name']}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/CCCCCC/000000?text=Image+Not+Found';">
+            """
+            # Loop through each image URL in the 'Image' list for the current restaurant
+            for img_url in row['Image']:
+                card_html += f"""
+                <img src="{img_url}" alt="{row['Name']}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/CCCCCC/000000?text=Image+Not+Found';">
+                """
+            # Continue building the rest of the card HTML
+            card_html += f"""
                 <div class="restaurant-name">{row['Name']}</div>
                 <div class="restaurant-details">
                     <strong>Cuisine:</strong> {row['Cuisine']}<br>
@@ -283,7 +314,8 @@ if not filtered_df.empty: # Check if there are any restaurants after filtering
                 </div>
                 <div class="restaurant-description">{row['Description']}</div>
             </div>
-            """, unsafe_allow_html=True) # Render each restaurant's details within a styled card using markdown and HTML.
+            """
+            st.markdown(card_html, unsafe_allow_html=True) # Render the complete restaurant card HTML.
         col_index = (col_index + 1) % 3 # Move to the next column, cycling back to the first after the third.
 else:
     st.info("No restaurants found matching your criteria. Please adjust your filters.") # Display an informational message if no restaurants are found.
