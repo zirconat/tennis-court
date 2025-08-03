@@ -532,12 +532,12 @@ if st.session_state.show_add_restaurant_form:
         new_rating = st.slider("Rating", 0.0, 5.0, 3.0, 0.1, help="Overall rating of the restaurant.")
         new_price = st.selectbox("Price Range", ["$", "$$", "$$$", "$$$$"], index=1, help="$, $$, $$$, or $$$$.")
         new_description = st.text_area("Description", help="A brief description of the restaurant.")
-        uploaded_image = st.file_uploader("Upload Image (Optional)", type=["png", "jpg", "jpeg"], help="Upload a photo of the restaurant.")
-
         new_private_room = st.selectbox("Private Room Available?", ["No", "Yes"], help="Does the restaurant have a private room?")
         new_capacity = None
         if new_private_room == "Yes":
             new_capacity = st.number_input("Max Capacity of Private Room", min_value=1, value=10, step=1, help="Maximum number of people the private room can hold.")
+
+        uploaded_image = st.file_uploader("Upload Image (Optional)", type=["png", "jpg", "jpeg"], help="Upload a photo of the restaurant.")
 
         col1, col2, col3 = st.columns(3)
 
