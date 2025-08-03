@@ -5,7 +5,7 @@ from datetime import datetime
 import time
 import base64
 import io
-import numpy as np # Import numpy for NaN values
+import numpy as np
 
 # --- CSV File Configuration ---
 RESTAURANTS_CSV_FILE = "restaurants.csv"
@@ -205,6 +205,7 @@ def load_restaurants(file_path=RESTAURANTS_CSV_FILE):
 # --- Streamlit App Configuration ---
 st.set_page_config(
     page_title="Singapore Restaurant Guide",
+    page_icon="🍽️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -214,12 +215,9 @@ st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-    html, body, [class*="st-"] {
-        font-family: 'Inter', sans-serif;
-    }
-
+    
     .main-header {
+        font-family: 'Inter', sans-serif;
         font-size: 3em;
         color: #2F4F4F;
         text-align: center;
@@ -228,6 +226,7 @@ st.markdown(
     }
 
     .subheader {
+        font-family: 'Inter', sans-serif;
         font-size: 1.5em;
         color: #4682B4;
         margin-top: 20px;
@@ -237,6 +236,7 @@ st.markdown(
 
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input {
+        font-family: 'Inter', sans-serif;
         border-radius: 10px;
         border: 1px solid #ccc;
         padding: 8px 12px;
@@ -246,17 +246,20 @@ st.markdown(
       color: #666;
     }
     .stTextArea > div > div {
+        font-family: 'Inter', sans-serif;
         border-radius: 10px;
         border: 1px solid #ccc;
         padding: 8px 12px;
     }
 
     .stSelectbox > div > div {
+        font-family: 'Inter', sans-serif;
         border-radius: 10px;
         border: 1px solid #ccc;
     }
 
     .stButton > button {
+        font-family: 'Inter', sans-serif;
         background-color: #17a589;
         color: white;
         border-radius: 10px;
@@ -273,6 +276,7 @@ st.markdown(
     }
 
     .restaurant-card {
+        font-family: 'Inter', sans-serif;
         background-color: #f9f9f9;
         border-radius: 15px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -292,6 +296,7 @@ st.markdown(
     }
     
     .restaurant-name {
+        font-family: 'Inter', sans-serif;
         font-size: 1.8em;
         color: #2F4F4F;
         font-weight: 700;
@@ -299,12 +304,14 @@ st.markdown(
     }
 
     .restaurant-details {
+        font-family: 'Inter', sans-serif;
         font-size: 1.1em;
         color: #555;
         margin-bottom: 8px;
     }
 
     .restaurant-description {
+        font-family: 'Inter', sans-serif;
         font-size: 0.95em;
         color: #666;
         line-height: 1.5;
@@ -387,7 +394,7 @@ def load_reviews_from_csv(restaurant_name=None):
 
 # --- App Title and Header ---
 st.markdown('<h1 class="main-header">🍽️ Singapore Restaurant Guide</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; color: #666; font-size: 1.1em;">Discover and add the best dining experiences in Singapore!</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; color: #666; font-size: 1.1em; font-family: \'Inter\', sans-serif;">Discover and add the best dining experiences in Singapore!</p>', unsafe_allow_html=True)
 
 # --- Sidebar for File Upload and Filters ---
 st.sidebar.header("Data Source")
@@ -674,7 +681,7 @@ else:
 st.markdown(
     """
     <hr style="margin-top: 50px; border-top: 1px solid #eee;">
-    <p style="text-align: center; color: #999; font-size: 0.8em;">
+    <p style="text-align: center; color: #999; font-size: 0.8em; font-family: \'Inter\', sans-serif;">
         Built with ❤️ using Streamlit.
     </p>
     """,
