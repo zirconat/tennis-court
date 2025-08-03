@@ -1,21 +1,38 @@
-import streamlit as st # Import the Streamlit library for building web applications.
-import pandas as pd # Import pandas for data manipulation.
-import os # Import os for path manipulation, especially for the CSV file.
-from datetime import datetime # Import datetime to record the timestamp of reviews.
-import time # Import time for adding a delay.
-import base64 # Import base64 for image encoding.
-import io # Import io for handling binary data from file uploads.
+import streamlit as st
+import pandas as pd
+import os
+from datetime import datetime
+import time
+import base64
+import io
+import numpy as np # Import numpy for NaN values
 
 # --- CSV File Configuration ---
-RESTAURANTS_CSV_FILE = "restaurants.csv" # Define the name of the CSV file to store restaurant data.
-REVIEWS_CSV_FILE = "reviews.csv" # Define the name of the CSV file to store reviews.
+RESTAURANTS_CSV_FILE = "restaurants.csv"
+REVIEWS_CSV_FILE = "reviews.csv"
 
-# --- Initialize CSV files if they don't exist ---
+# --- Utility Function to ensure DataFrame schema is correct ---
+def validate_and_update_dataframe(df):
+    """
+    Checks for the presence of 'Private Room' and 'Max Capacity' columns
+    and adds them with default values if they are missing.
+    """
+    if 'Private Room' not in df.columns:
+        df['Private Room'] = 'No'
+    if 'Max Capacity' not in df.columns:
+        df['Max Capacity'] = np.nan
+    # Ensure 'Max Capacity' is of numeric type for filtering
+    df['Max Capacity'] = pd.to_numeric(df['Max Capacity'], errors='coerce')
+    return df
+
+# --- Initialize CSV files and ensure they have the correct schema ---
 def initialize_csv_files():
-    """Initializes the restaurants.csv and reviews.csv files with headers if they don't exist."""
+    """
+    Initializes the restaurants.csv and reviews.csv files with headers.
+    If the files exist, it checks and adds new columns to avoid KeyErrors.
+    """
     # Restaurant data initialization
     if not os.path.exists(RESTAURANTS_CSV_FILE):
-        # Sample Restaurant Data (used for initial creation)
         restaurant_data = [
             {
                 "Name": "The Dempsey Cookhouse & Bar",
@@ -25,7 +42,9 @@ def initialize_csv_files():
                 "Price Range": "$$$",
                 "Description": "Chic restaurant by Jean-Georges Vongerichten, offering a sophisticated dining experience.",
                 "Image": "https://placehold.co/600x400/FF5733/FFFFFF?text=Dempsey+Cookhouse",
-                "Address": "17D Dempsey Rd, Singapore 249676"
+                "Address": "17D Dempsey Rd, Singapore 249676",
+                "Private Room": "No",
+                "Max Capacity": None
             },
             {
                 "Name": "Odette",
@@ -35,7 +54,9 @@ def initialize_csv_files():
                 "Price Range": "$$$$",
                 "Description": "Three Michelin-starred modern French restaurant, known for its exquisite tasting menus.",
                 "Image": "https://placehold.co/600x400/33FF57/000000?text=Odette",
-                "Address": "1 St Andrew's Rd, #01-04 National Gallery, Singapore 178957"
+                "Address": "1 St Andrew's Rd, #01-04 National Gallery, Singapore 178957",
+                "Private Room": "Yes",
+                "Max Capacity": 12
             },
             {
                 "Name": "Burnt Ends",
@@ -45,7 +66,9 @@ def initialize_csv_files():
                 "Price Range": "$$$",
                 "Description": "Modern Australian barbecue with an open-concept kitchen and custom-built ovens.",
                 "Image": "https://placehold.co/600x400/3357FF/FFFFFF?text=Burnt+Ends",
-                "Address": "7 Dempsey Rd, #01-04, Singapore 249671"
+                "Address": "7 Dempsey Rd, #01-04, Singapore 249671",
+                "Private Room": "No",
+                "Max Capacity": None
             },
             {
                 "Name": "Candlenut",
@@ -55,7 +78,9 @@ def initialize_csv_files():
                 "Price Range": "$$",
                 "Description": "The world's first Michelin-starred Peranakan restaurant, offering refined Straits-Chinese cuisine.",
                 "Image": "https://placehold.co/600x400/FF33A1/FFFFFF?text=Candlenut",
-                "Address": "17A Dempsey Rd, Singapore 249676"
+                "Address": "17A Dempsey Rd, Singapore 249676",
+                "Private Room": "Yes",
+                "Max Capacity": 8
             },
             {
                 "Name": "Jumbo Seafood",
@@ -65,7 +90,9 @@ def initialize_csv_files():
                 "Price Range": "$$",
                 "Description": "Famous for its Chili Crab and Black Pepper Crab, a must-visit for seafood lovers.",
                 "Image": "https://placehold.co/600x400/A1FF33/000000?text=Jumbo+Seafood",
-                "Address": "301 Upper East Coast Rd, Singapore 466444"
+                "Address": "301 Upper East Coast Rd, Singapore 466444",
+                "Private Room": "Yes",
+                "Max Capacity": 20
             },
             {
                 "Name": "Tiong Bahru Bakery",
@@ -75,7 +102,9 @@ def initialize_csv_files():
                 "Price Range": "$",
                 "Description": "Popular spot for freshly baked pastries, coffee, and a relaxed atmosphere.",
                 "Image": "https://placehold.co/600x400/33A1FF/FFFFFF?text=Tiong+Bahru+Bakery",
-                "Address": "56 Eng Hoon St, #01-70, Singapore 160056"
+                "Address": "56 Eng Hoon St, #01-70, Singapore 160056",
+                "Private Room": "No",
+                "Max Capacity": None
             },
             {
                 "Name": "Newton Food Centre",
@@ -85,7 +114,9 @@ def initialize_csv_files():
                 "Price Range": "$",
                 "Description": "An iconic hawker centre offering a wide variety of local Singaporean dishes.",
                 "Image": "https://placehold.co/600x400/FFBB33/000000?text=Newton+Food+Centre",
-                "Address": "500 Clemenceau Ave N, Singapore 229495"
+                "Address": "500 Clemenceau Ave N, Singapore 229495",
+                "Private Room": "No",
+                "Max Capacity": None
             },
             {
                 "Name": "PS.Cafe Harding Road",
@@ -95,7 +126,9 @@ def initialize_csv_files():
                 "Price Range": "$$",
                 "Description": "A popular cafe chain known for its truffle fries, relaxed ambiance, and lush surroundings.",
                 "Image": "https://placehold.co/600x400/BB33FF/FFFFFF?text=PS.Cafe",
-                "Address": "28B Harding Rd, Singapore 249549"
+                "Address": "28B Harding Rd, Singapore 249549",
+                "Private Room": "Yes",
+                "Max Capacity": 6
             },
             {
                 "Name": "National Kitchen by Violet Oon",
@@ -105,7 +138,9 @@ def initialize_csv_files():
                 "Price Range": "$$$",
                 "Description": "Elegant restaurant serving classic Peranakan dishes in a grand setting at the National Gallery.",
                 "Image": "https://placehold.co/600x400/33FFBB/000000?text=National+Kitchen",
-                "Address": "1 St Andrew's Rd, #02-01 National Gallery, Singapore 178957"
+                "Address": "1 St Andrew's Rd, #02-01 National Gallery, Singapore 178957",
+                "Private Room": "Yes",
+                "Max Capacity": 10
             },
             {
                 "Name": "Les Amis",
@@ -115,16 +150,17 @@ def initialize_csv_files():
                 "Price Range": "$$$$",
                 "Description": "One of Singapore's oldest independent fine-dining French restaurants, with three Michelin stars.",
                 "Image": "https://placehold.co/600x400/FF3333/FFFFFF?text=Les+Amis",
-                "Address": "1 Scotts Rd, #02-16 Shaw Centre, Singapore 228208"
+                "Address": "1 Scotts Rd, #02-16 Shaw Centre, Singapore 228208",
+                "Private Room": "Yes",
+                "Max Capacity": 16
             }
         ]
         initial_restaurants_df = pd.DataFrame(restaurant_data)
         initial_restaurants_df.to_csv(RESTAURANTS_CSV_FILE, index=False)
-        # Use st.empty to show a success message that can be cleared later
         with st.empty():
             st.success("Restaurants data initialized.", icon="✅")
-            time.sleep(2) # brief pause to show the message
-
+            time.sleep(2)
+    
     # Reviews data initialization
     if not os.path.exists(REVIEWS_CSV_FILE):
         initial_reviews_df = pd.DataFrame(columns=[
@@ -134,7 +170,6 @@ def initialize_csv_files():
         ])
         initial_reviews_df.to_csv(REVIEWS_CSV_FILE, index=False)
 
-# Call the initialization function
 initialize_csv_files()
 
 # --- Session State Initialization ---
@@ -149,7 +184,7 @@ if 'add_restaurant_submitted' not in st.session_state:
 if 'new_location_selected' not in st.session_state:
     st.session_state.new_location_selected = False
 if 'df' not in st.session_state:
-    st.session_state.df = None # New session state variable to hold the current DataFrame
+    st.session_state.df = None
 
 # --- Load restaurant data from CSV ---
 @st.cache_data
@@ -157,6 +192,8 @@ def load_restaurants(file_path=RESTAURANTS_CSV_FILE):
     """Loads all restaurant data from a specified CSV file path."""
     try:
         df_restaurants = pd.read_csv(file_path)
+        # Ensure the DataFrame has the correct columns, regardless of the source
+        df_restaurants = validate_and_update_dataframe(df_restaurants)
         return df_restaurants
     except FileNotFoundError:
         st.error(f"Restaurant data file not found at {file_path}. Please re-run the app or upload a new file.")
@@ -164,7 +201,6 @@ def load_restaurants(file_path=RESTAURANTS_CSV_FILE):
     except Exception as e:
         st.error(f"Error loading CSV file: {e}")
         return pd.DataFrame()
-
 
 # --- Streamlit App Configuration ---
 st.set_page_config(
@@ -177,133 +213,117 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'); /* Import Inter font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
     html, body, [class*="st-"] {
-        font-family: 'Inter', sans-serif; /* Apply Inter font to all Streamlit elements */
+        font-family: 'Inter', sans-serif;
     }
 
     .main-header {
-        font-size: 3em; /* Larger font size for the main header */
-        color: #2F4F4F; /* Dark Slate Gray color */
-        text-align: center; /* Center align the header text */
-        margin-bottom: 30px; /* Add space below the header */
-        font-weight: 700; /* Bold font weight */
+        font-size: 3em;
+        color: #2F4F4F;
+        text-align: center;
+        margin-bottom: 30px;
+        font-weight: 700;
     }
 
     .subheader {
-        font-size: 1.5em; /* Font size for subheaders */
-        color: #4682B4; /* Steel Blue color */
-        margin-top: 20px; /* Space above subheaders */
-        margin-bottom: 15px; /* Space below subheaders */
-        font-weight: 600; /* Semi-bold font weight */
+        font-size: 1.5em;
+        color: #4682B4;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        font-weight: 600;
     }
 
-    .stTextInput > div > div > input {
-        border-radius: 10px; /* Rounded corners for text input */
-        border: 1px solid #ccc; /* Light gray border */
-        padding: 8px 12px; /* Padding inside the input field */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input {
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        padding: 8px 12px;
     }
     
     .stTextArea > label {
       color: #666;
     }
     .stTextArea > div > div {
-        border-radius: 10px; /* Rounded corners for text area */
-        border: 1px solid #ccc; /* Light gray border */
-        padding: 8px 12px; /* Padding inside the input field */
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        padding: 8px 12px;
     }
 
     .stSelectbox > div > div {
-        border-radius: 10px; /* Rounded corners for selectbox */
-        border: 1px solid #ccc; /* Light gray border */
+        border-radius: 10px;
+        border: 1px solid #ccc;
     }
 
     .stButton > button {
-        background-color: #17a589 ; /* Steel green background for buttons */
-        color: white; /* White text color */
-        border-radius: 10px; /* Rounded corners for buttons */
-        padding: 10px 20px; /* Padding inside buttons */
-        border: none; /* No border */
-        font-weight: 600; /* Semi-bold font weight */
-        cursor: pointer; /* Pointer cursor on hover */
-        transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for background and color */
+        background-color: #17a589;
+        color: white;
+        border-radius: 10px;
+        padding: 10px 20px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     .stButton > button:hover {
-        background-color: #48c9b0; /* Lighter green on hover */
-        color: #333; /* Dark grey text color on hover */
+        background-color: #48c9b0;
+        color: #333;
     }
 
     .restaurant-card {
-        background-color: #f9f9f9; /* Light gray background for cards */
-        border-radius: 15px; /* More rounded corners for cards */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-        padding: 20px; /* Padding inside cards */
-        margin-bottom: 25px; /* Space between cards */
-        display: flex; /* Use flexbox for layout within the card */
-        flex-direction: column; /* Stack items vertically */
-        height: 100%; /* Ensure cards take full height in a grid */
+        background-color: #f9f9f9;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 25px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
 
     .restaurant-card img {
-        width: 100%; /* Image takes full width of the card */
-        height: 200px; /* Fixed height for images */
-        object-fit: cover; /* Cover the area, cropping if necessary */
-        border-radius: 10px; /* Rounded corners for images */
-        margin-bottom: 15px; /* Space below image */
-    }
-    
-    .add-restaurant-modal {
-        position: fixed; /* Fixed position */
-        top: 50%; /* Center vertically */
-        left: 50%; /* Center horizontally */
-        transform: translate(-50%, -50%); /* Adjust for perfect centering */
-        width: 80%; /* Width of the modal */
-        max-width: 700px; /* Max width */
-        background-color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        z-index: 1000; /* High z-index to be on top */
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 15px;
     }
     
     .restaurant-name {
-        font-size: 1.8em; /* Larger font for restaurant name */
-        color: #2F4F4F; /* Dark Slate Gray */
-        font-weight: 700; /* Bold */
-        margin-bottom: 5px; /* Small space below name */
+        font-size: 1.8em;
+        color: #2F4F4F;
+        font-weight: 700;
+        margin-bottom: 5px;
     }
 
     .restaurant-details {
-        font-size: 1.1em; /* Font size for details */
-        color: #555; /* Darker gray for details */
-        margin-bottom: 8px; /* Space below details */
+        font-size: 1.1em;
+        color: #555;
+        margin-bottom: 8px;
     }
 
     .restaurant-description {
-        font-size: 0.95em; /* Slightly smaller font for description */
-        color: #666; /* Medium gray for description */
-        line-height: 1.5; /* Good line height for readability */
-        flex-grow: 1; /* Allow description to take available space */
+        font-size: 0.95em;
+        color: #666;
+        line-height: 1.5;
+        flex-grow: 1;
     }
     
-    .st-emotion-cache-1cypcdb { /* Target the main block container for centering */
+    .st-emotion-cache-1cypcdb {
         padding-top: 0rem;
     }
     </style>
     """,
-    unsafe_allow_html=True # Allow Streamlit to render raw HTML and CSS.
+    unsafe_allow_html=True
 )
 
 # --- Function to Save Review to CSV ---
 def save_review_to_csv(restaurant_name, rating, review_text, reviewer_name, reviewer_department, reviewer_designation):
     """Saves a review to the CSV file."""
     try:
-        # Load existing reviews
         reviews_df = pd.read_csv(REVIEWS_CSV_FILE)
-        
-        # Create a new review record as a DataFrame
         new_review = pd.DataFrame([{
             "restaurant_name": restaurant_name,
             "rating": rating,
@@ -311,10 +331,8 @@ def save_review_to_csv(restaurant_name, rating, review_text, reviewer_name, revi
             "reviewer_name": reviewer_name,
             "reviewer_department": reviewer_department,
             "reviewer_designation": reviewer_designation,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S") # Format timestamp
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }])
-        
-        # Append the new review to the DataFrame and save back to CSV
         reviews_df = pd.concat([reviews_df, new_review], ignore_index=True)
         reviews_df.to_csv(REVIEWS_CSV_FILE, index=False)
         return True
@@ -323,18 +341,14 @@ def save_review_to_csv(restaurant_name, rating, review_text, reviewer_name, revi
         return False
 
 # --- Function to Add a New Restaurant to CSV ---
-def add_restaurant_to_csv(name, cuisine, location, rating, price_range, description, image, address):
+def add_restaurant_to_csv(name, cuisine, location, rating, price_range, description, image, address, private_room, max_capacity):
     """Adds a new restaurant to the restaurants.csv file."""
     try:
-        # Load existing restaurants
         restaurants_df = pd.read_csv(RESTAURANTS_CSV_FILE)
-        
-        # Check if restaurant with the same name already exists
         if name in restaurants_df['Name'].values:
             st.warning("A restaurant with this name already exists. Please use a unique name.")
             return False
 
-        # Create a new restaurant record as a DataFrame
         new_restaurant = pd.DataFrame([{
             "Name": name,
             "Cuisine": cuisine,
@@ -343,10 +357,11 @@ def add_restaurant_to_csv(name, cuisine, location, rating, price_range, descript
             "Price Range": price_range,
             "Description": description,
             "Image": image,
-            "Address": address
+            "Address": address,
+            "Private Room": private_room,
+            "Max Capacity": max_capacity
         }])
         
-        # Append the new restaurant and save back to CSV
         restaurants_df = pd.concat([restaurants_df, new_restaurant], ignore_index=True)
         restaurants_df.to_csv(RESTAURANTS_CSV_FILE, index=False)
         return True
@@ -360,43 +375,38 @@ def load_reviews_from_csv(restaurant_name=None):
     try:
         reviews_df = pd.read_csv(REVIEWS_CSV_FILE)
         if restaurant_name:
-            # Filter reviews for the specific restaurant
             restaurant_reviews = reviews_df[reviews_df["restaurant_name"] == restaurant_name]
-            # Sort by timestamp in descending order (most recent first)
             restaurant_reviews = restaurant_reviews.sort_values(by="timestamp", ascending=False)
-            return restaurant_reviews.to_dict(orient="records") # Return as list of dictionaries
-        return reviews_df # Return the full DataFrame if no name is specified
+            return restaurant_reviews.to_dict(orient="records")
+        return reviews_df
     except FileNotFoundError:
-        return pd.DataFrame() if not restaurant_name else [] # Return empty DataFrame or list
+        return pd.DataFrame() if not restaurant_name else []
     except Exception as e:
         st.error(f"Error loading reviews from CSV: {e}")
         return pd.DataFrame() if not restaurant_name else []
 
 # --- App Title and Header ---
-st.markdown('<h1 class="main-header">🍽️ Singapore Restaurant Guide</h1>', unsafe_allow_html=True) # Display a large, styled main header.
-st.markdown('<p style="text-align: center; color: #666; font-size: 1.1em;">Discover and add the best dining experiences in Singapore!</p>', unsafe_allow_html=True) # A descriptive subtitle.
+st.markdown('<h1 class="main-header">🍽️ Singapore Restaurant Guide</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; color: #666; font-size: 1.1em;">Discover and add the best dining experiences in Singapore!</p>', unsafe_allow_html=True)
 
 # --- Sidebar for File Upload and Filters ---
 st.sidebar.header("Data Source")
-uploaded_file = st.sidebar.file_uploader("Upload your own restaurant database (CSV)", type=["csv"], help="Upload a CSV file with 'Name', 'Cuisine', 'Location', 'Rating', 'Price Range', 'Description', 'Image', and 'Address' columns.")
+uploaded_file = st.sidebar.file_uploader("Upload your own restaurant database (CSV)", type=["csv"], help="Upload a CSV file with 'Name', 'Cuisine', 'Location', 'Rating', 'Price Range', 'Description', 'Image', 'Address', 'Private Room', and 'Max Capacity' columns.")
 
-# Load the appropriate DataFrame based on user action
 if uploaded_file is not None:
-    # If a file is uploaded, use it.
-    st.session_state.df = pd.read_csv(uploaded_file)
-    st.cache_data.clear() # Clear the cache to ensure new data is loaded
+    # Load and validate the uploaded file
+    df_uploaded = pd.read_csv(uploaded_file)
+    st.session_state.df = validate_and_update_dataframe(df_uploaded)
+    st.cache_data.clear()
 else:
-    # If no file is uploaded or the uploader is cleared, load the default data.
     if st.session_state.df is None:
         st.session_state.df = load_restaurants()
-    # If the user clears the uploaded file, reset to default data.
     elif 'uploaded_file' in st.session_state and st.session_state.uploaded_file is None:
         st.session_state.df = load_restaurants()
         st.cache_data.clear()
 
-df = st.session_state.df # Use the session state DataFrame
+df = st.session_state.df
 
-# --- Download Buttons ---
 if not df.empty:
     csv_restaurants = df.to_csv(index=False).encode('utf-8')
     st.sidebar.download_button(
@@ -417,28 +427,38 @@ if not reviews_df.empty:
         mime='text/csv',
         help="Click here to download all submitted reviews as a CSV file."
     )
-st.sidebar.markdown("---") # Add a separator
+st.sidebar.markdown("---")
 
-st.sidebar.header("Filter Restaurants") # Add a header to the sidebar.
+st.sidebar.header("Filter Restaurants")
 
-# Search bar in the sidebar
-search_query = st.sidebar.text_input("Search by Name or Description", "") # Create a text input for searching restaurant names or descriptions.
+search_query = st.sidebar.text_input("Search by Name or Description", "")
 
-# Cuisine filter in the sidebar
 if not df.empty:
     cuisine_options = ["All"] + sorted(df["Cuisine"].unique().tolist())
     selected_cuisine = st.sidebar.selectbox("Select Cuisine", cuisine_options)
 
-    # Location filter in the sidebar
     location_options = ["All"] + sorted(df["Location"].unique().tolist())
     selected_location_filter = st.sidebar.selectbox("Select Location", location_options)
 
-    # Price Range filter in the sidebar
     price_range_options = ["All", "$", "$$", "$$$", "$$$$"]
     selected_price_range = st.sidebar.selectbox("Select Price Range", price_range_options)
 
-    # Rating filter in the sidebar
     min_rating = st.sidebar.slider("Minimum Rating", 0.0, 5.0, 0.0, 0.1)
+    
+    # Using a hardcoded list to avoid KeyError on a fresh or user-uploaded CSV
+    private_room_options = ["All", "Yes", "No"]
+    selected_private_room_filter = st.sidebar.selectbox("Private Room Available?", private_room_options)
+
+    min_capacity_filter = None
+    if selected_private_room_filter == "Yes":
+        # Get valid capacities from the DataFrame to set a realistic max value for the slider
+        valid_capacities = df[df['Private Room'] == 'Yes']['Max Capacity'].dropna().tolist()
+        if valid_capacities:
+            max_possible_capacity = int(max(valid_capacities))
+            min_capacity_filter = st.sidebar.slider("Minimum Private Room Capacity", 1, max_possible_capacity, 1)
+        else:
+            st.sidebar.info("No restaurants with private rooms have a capacity specified.")
+
 
     # --- Apply Filters ---
     filtered_df = df.copy()
@@ -459,6 +479,14 @@ if not df.empty:
         filtered_df = filtered_df[filtered_df["Price Range"] == selected_price_range]
 
     filtered_df = filtered_df[filtered_df["Rating"] >= min_rating]
+    
+    if selected_private_room_filter != "All":
+        filtered_df = filtered_df[filtered_df["Private Room"] == selected_private_room_filter]
+        if selected_private_room_filter == "Yes" and min_capacity_filter is not None:
+            # Check for NaN values before filtering
+            filtered_df = filtered_df[pd.to_numeric(filtered_df['Max Capacity'], errors='coerce').notna()]
+            filtered_df = filtered_df[filtered_df["Max Capacity"] >= min_capacity_filter]
+
 else:
     filtered_df = pd.DataFrame()
 
@@ -471,30 +499,25 @@ if st.button("➕ Add a New Restaurant"):
 
 # --- Add New Restaurant Form (simulated pop-up) ---
 if st.session_state.show_add_restaurant_form:
-    # Use a container to make the form stand out like a pop-up
     with st.container(border=True):
         st.markdown('<h3 style="text-align: center;">Enter New Restaurant Details</h3>', unsafe_allow_html=True)
 
         new_name = st.text_input("Restaurant Name", help="The name of the restaurant.")
         new_cuisine = st.text_input("Cuisine", help="e.g., Italian, Japanese, Local Hawker.")
         
-        # Get existing locations and sort them.
         existing_locations = sorted(df["Location"].unique().tolist()) if not df.empty else []
-        # Add the "Add new location..." option to the end of the list.
         locations = existing_locations + ["Add new location..."]
         
-        # Callback function for the selectbox
         def handle_location_change():
             if st.session_state.location_selectbox == "Add new location...":
                 st.session_state.new_location_selected = True
             else:
                 st.session_state.new_location_selected = False
 
-        # The selectbox will default to the first item if locations exist.
         selected_location = st.selectbox(
             "Location", 
             options=locations, 
-            index=0 if locations else None, # Set index to 0 if list is not empty, else None.
+            index=0 if locations else None,
             key="location_selectbox",
             on_change=handle_location_change,
             help="Select a pre-existing location or add a new one."
@@ -511,6 +534,11 @@ if st.session_state.show_add_restaurant_form:
         new_description = st.text_area("Description", help="A brief description of the restaurant.")
         uploaded_image = st.file_uploader("Upload Image (Optional)", type=["png", "jpg", "jpeg"], help="Upload a photo of the restaurant.")
 
+        new_private_room = st.selectbox("Private Room Available?", ["No", "Yes"], help="Does the restaurant have a private room?")
+        new_capacity = None
+        if new_private_room == "Yes":
+            new_capacity = st.number_input("Max Capacity of Private Room", min_value=1, value=10, step=1, help="Maximum number of people the private room can hold.")
+
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -523,8 +551,8 @@ if st.session_state.show_add_restaurant_form:
                         image_data = f"data:{uploaded_image.type};base64,{b64_encoded_image}"
                     else:
                         image_data = "https://placehold.co/600x400/CCCCCC/000000?text=Image+Not+Available"
-
-                    if add_restaurant_to_csv(new_name, new_cuisine, final_location, new_rating, new_price, new_description, image_data, new_address):
+                    
+                    if add_restaurant_to_csv(new_name, new_cuisine, final_location, new_rating, new_price, new_description, image_data, new_address, new_private_room, new_capacity):
                         st.session_state.add_restaurant_submitted = True
                         st.session_state.show_add_restaurant_form = False
                         st.success(f"Restaurant '{new_name}' added successfully!", icon="✅")
@@ -561,6 +589,10 @@ if not filtered_df.empty:
                 else:
                     image_tag = f'<img src="https://placehold.co/600x400/CCCCCC/000000?text=Image+Not+Available" alt="{row["Name"]}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;">'
 
+                private_room_info = f"<strong>Private Room:</strong> {row.get('Private Room', 'N/A')}"
+                if row.get('Private Room', 'N/A') == "Yes" and pd.notna(row.get('Max Capacity')):
+                    private_room_info += f" (Max Capacity: {int(row['Max Capacity'])})"
+
                 st.markdown(f"""
                 <div class="restaurant-card">
                     {image_tag}
@@ -570,7 +602,8 @@ if not filtered_df.empty:
                         <strong>Location:</strong> {row['Location']}<br>
                         <strong>Address:</strong> {row['Address']}<br>
                         <strong>Rating:</strong> {row['Rating']} ⭐<br>
-                        <strong>Price:</strong> {row['Price Range']}
+                        <strong>Price:</strong> {row['Price Range']}<br>
+                        {private_room_info}
                     </div>
                     <div class="restaurant-description">{row['Description']}</div>
                 </div>
