@@ -229,7 +229,7 @@ st.set_page_config(
     page_title="Singapore Restaurant Guide",
     page_icon="🍽️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # --- Custom CSS for Styling ---
@@ -351,6 +351,13 @@ st.markdown(
         margin: 0 10px;
         font-size: 1em;
         color: #555;
+    }
+
+    .sidebar-message {
+        font-size: 0.9em;
+        color: #555;
+        text-align: center;
+        margin-bottom: 1rem;
     }
     </style>
     """,
@@ -495,6 +502,7 @@ def load_gallery_images_from_csv(restaurant_name=None):
 # --- App Title and Header ---
 st.markdown('<h1 class="main-header">🍽️ Singapore Restaurant Guide</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align: center; color: #666; font-size: 1.1em; font-family: \'Inter\', sans-serif;">Discover and add the best dining experiences in Singapore!</p>', unsafe_allow_html=True)
+
 
 # --- Sidebar for File Upload and Filters ---
 st.sidebar.header("Data Source")
