@@ -11,7 +11,7 @@ import numpy as np
 RESTAURANTS_CSV_FILE = "restaurants.csv"
 REVIEWS_CSV_FILE = "reviews.csv"
 MENUS_CSV_FILE = "menus.csv"
-RESTAURANT_IMAGES_CSV_FILE = "restaurant_images.csv"
+GALLERY_CSV_FILE = "gallery_images.csv"
 
 # --- Utility Function to ensure DataFrame schema is correct ---
 def validate_and_update_dataframe(df):
@@ -30,7 +30,7 @@ def validate_and_update_dataframe(df):
 # --- Initialize CSV files and ensure they have the correct schema ---
 def initialize_csv_files():
     """
-    Initializes the restaurants.csv, reviews.csv, and menus.csv files with headers.
+    Initializes the restaurants.csv, reviews.csv, menus.csv, and gallery_images.csv files with headers.
     If the files exist, it checks and adds new columns to avoid KeyErrors.
     """
     # Restaurant data initialization
@@ -43,7 +43,7 @@ def initialize_csv_files():
                 "Rating": 4.5,
                 "Price Range": "$$$",
                 "Description": "Chic restaurant by Jean-Georges Vongerichten, offering a sophisticated dining experience.",
-                "Image": "https://placehold.co/600x400/FF5733/FFFFFF?text=Dempsey+Cookhouse",
+                "Image": "https://placehold.co/600x400/FF5733/FFFFFF?text=Dempsey+Cookhouse", # Retained for initial data only
                 "Address": "17D Dempsey Rd, Singapore 249676",
                 "Private Room": "No",
                 "Max Capacity": None
@@ -55,7 +55,7 @@ def initialize_csv_files():
                 "Rating": 5.0,
                 "Price Range": "$$$$",
                 "Description": "Three Michelin-starred modern French restaurant, known for its exquisite tasting menus.",
-                "Image": "https://placehold.co/600x400/33FF57/000000?text=Odette",
+                "Image": "https://placehold.co/600x400/33FF57/000000?text=Odette", # Retained for initial data only
                 "Address": "1 St Andrew's Rd, #01-04 National Gallery, Singapore 178957",
                 "Private Room": "Yes",
                 "Max Capacity": 12
@@ -67,7 +67,7 @@ def initialize_csv_files():
                 "Rating": 4.7,
                 "Price Range": "$$$",
                 "Description": "Modern Australian barbecue with an open-concept kitchen and custom-built ovens.",
-                "Image": "https://placehold.co/600x400/3357FF/FFFFFF?text=Burnt+Ends",
+                "Image": "https://placehold.co/600x400/3357FF/FFFFFF?text=Burnt+Ends", # Retained for initial data only
                 "Address": "7 Dempsey Rd, #01-04, Singapore 249671",
                 "Private Room": "No",
                 "Max Capacity": None
@@ -79,7 +79,7 @@ def initialize_csv_files():
                 "Rating": 4.3,
                 "Price Range": "$$",
                 "Description": "The world's first Michelin-starred Peranakan restaurant, offering refined Straits-Chinese cuisine.",
-                "Image": "https://placehold.co/600x400/FF33A1/FFFFFF?text=Candlenut",
+                "Image": "https://placehold.co/600x400/FF33A1/FFFFFF?text=Candlenut", # Retained for initial data only
                 "Address": "17A Dempsey Rd, Singapore 249676",
                 "Private Room": "Yes",
                 "Max Capacity": 8
@@ -91,7 +91,7 @@ def initialize_csv_files():
                 "Rating": 4.2,
                 "Price Range": "$$",
                 "Description": "Famous for its Chili Crab and Black Pepper Crab, a must-visit for seafood lovers.",
-                "Image": "https://placehold.co/600x400/A1FF33/000000?text=Jumbo+Seafood",
+                "Image": "https://placehold.co/600x400/A1FF33/000000?text=Jumbo+Seafood", # Retained for initial data only
                 "Address": "301 Upper East Coast Rd, Singapore 466444",
                 "Private Room": "Yes",
                 "Max Capacity": 20
@@ -103,7 +103,7 @@ def initialize_csv_files():
                 "Rating": 4.0,
                 "Price Range": "$",
                 "Description": "Popular spot for freshly baked pastries, coffee, and a relaxed atmosphere.",
-                "Image": "https://placehold.co/600x400/33A1FF/FFFFFF?text=Tiong+Bahru+Bakery",
+                "Image": "https://placehold.co/600x400/33A1FF/FFFFFF?text=Tiong+Bahru+Bakery", # Retained for initial data only
                 "Address": "56 Eng Hoon St, #01-70, Singapore 160056",
                 "Private Room": "No",
                 "Max Capacity": None
@@ -115,7 +115,7 @@ def initialize_csv_files():
                 "Rating": 3.8,
                 "Price Range": "$",
                 "Description": "An iconic hawker centre offering a wide variety of local Singaporean dishes.",
-                "Image": "https://placehold.co/600x400/FFBB33/000000?text=Newton+Food+Centre",
+                "Image": "https://placehold.co/600x400/FFBB33/000000?text=Newton+Food+Centre", # Retained for initial data only
                 "Address": "500 Clemenceau Ave N, Singapore 229495",
                 "Private Room": "No",
                 "Max Capacity": None
@@ -127,7 +127,7 @@ def initialize_csv_files():
                 "Rating": 4.1,
                 "Price Range": "$$",
                 "Description": "A popular cafe chain known for its truffle fries, relaxed ambiance, and lush surroundings.",
-                "Image": "https://placehold.co/600x400/BB33FF/FFFFFF?text=PS.Cafe",
+                "Image": "https://placehold.co/600x400/BB33FF/FFFFFF?text=PS.Cafe", # Retained for initial data only
                 "Address": "28B Harding Rd, Singapore 249549",
                 "Private Room": "Yes",
                 "Max Capacity": 6
@@ -139,22 +139,22 @@ def initialize_csv_files():
                 "Rating": 4.4,
                 "Price Range": "$$$",
                 "Description": "Elegant restaurant serving classic Peranakan dishes in a grand setting at the National Gallery.",
-                "Image": "https://placehold.co/600x400/33FFBB/000000?text=National+Kitchen",
+                "Image": "https://placehold.co/600x400/33FFBB/000000?text=National+Kitchen", # Retained for initial data only
                 "Address": "1 St Andrew's Rd, #02-01 National Gallery, Singapore 178957",
                 "Private Room": "Yes",
                 "Max Capacity": 10
             },
             {
                 "Name": "Les Amis",
-                "Cuisine": "French",
-                "Location": "Orchard",
-                "Rating": 4.9,
-                "Price Range": "$$$$",
-                "Description": "One of Singapore's oldest independent fine-dining French restaurants, with three Michelin stars.",
-                "Image": "https://placehold.co/600x400/FF3333/FFFFFF?text=Les+Amis",
-                "Address": "1 Scotts Rd, #02-16 Shaw Centre, Singapore 228208",
-                "Private Room": "Yes",
-                "Max Capacity": 16
+    "Cuisine": "French",
+    "Location": "Orchard",
+    "Rating": 4.9,
+    "Price Range": "$$$$",
+    "Description": "One of Singapore's oldest independent fine-dining French restaurants, with three Michelin stars.",
+    "Image": "https://placehold.co/600x400/FF3333/FFFFFF?text=Les+Amis", # Retained for initial data only
+    "Address": "1 Scotts Rd, #02-16 Shaw Centre, Singapore 228208",
+    "Private Room": "Yes",
+    "Max Capacity": 16
             }
         ]
         initial_restaurants_df = pd.DataFrame(restaurant_data)
@@ -179,12 +179,12 @@ def initialize_csv_files():
         ])
         initial_menus_df.to_csv(MENUS_CSV_FILE, index=False)
         
-    # Restaurant images data initialization
-    if not os.path.exists(RESTAURANT_IMAGES_CSV_FILE):
-        initial_images_df = pd.DataFrame(columns=[
+    # Gallery data initialization
+    if not os.path.exists(GALLERY_CSV_FILE):
+        initial_gallery_df = pd.DataFrame(columns=[
             "restaurant_name", "file_name", "file_type", "base64_data", "timestamp"
         ])
-        initial_images_df.to_csv(RESTAURANT_IMAGES_CSV_FILE, index=False)
+        initial_gallery_df.to_csv(GALLERY_CSV_FILE, index=False)
 
 
 initialize_csv_files()
@@ -204,8 +204,9 @@ if 'df' not in st.session_state:
     st.session_state.df = None
 if 'add_menu_for_restaurant' not in st.session_state:
     st.session_state.add_menu_for_restaurant = None
-if 'add_image_for_restaurant' not in st.session_state:
-    st.session_state.add_image_for_restaurant = None
+if 'add_photo_for_restaurant' not in st.session_state:
+    st.session_state.add_photo_for_restaurant = None
+
 
 # --- Load restaurant data from CSV ---
 @st.cache_data
@@ -335,6 +336,22 @@ st.markdown(
         flex-grow: 1;
     }
     
+    .st-emotion-cache-1p6f5x6 > div {
+        padding-top: 0px;
+    }
+
+    /* Additional styling for the gallery controls */
+    .gallery-controls-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    .gallery-counter {
+        margin: 0 10px;
+        font-size: 1em;
+        color: #555;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -420,7 +437,7 @@ def load_menus_from_csv(restaurant_name=None):
     except Exception as e:
         st.error(f"Error loading menus from CSV: {e}")
         return pd.DataFrame() if not restaurant_name else []
-
+        
 # --- Function to Add a New Menu Item (File) to CSV ---
 def add_menu_item_to_csv(restaurant_name, file_name, file_type, base64_data):
     """Adds a new menu item file to the menus.csv file."""
@@ -440,11 +457,11 @@ def add_menu_item_to_csv(restaurant_name, file_name, file_type, base64_data):
         st.error(f"Error saving new menu item file to CSV: {e}")
         return False
         
-# --- Function to Add a New Restaurant Image to CSV ---
-def add_restaurant_image_to_csv(restaurant_name, file_name, file_type, base64_data):
-    """Adds a new restaurant image file to the restaurant_images.csv file."""
+# --- Function to Add a New Gallery Image to CSV ---
+def add_gallery_image_to_csv(restaurant_name, file_name, file_type, base64_data):
+    """Adds a new gallery image to the gallery_images.csv file."""
     try:
-        images_df = pd.read_csv(RESTAURANT_IMAGES_CSV_FILE)
+        gallery_df = pd.read_csv(GALLERY_CSV_FILE)
         new_image = pd.DataFrame([{
             "restaurant_name": restaurant_name,
             "file_name": file_name,
@@ -452,27 +469,28 @@ def add_restaurant_image_to_csv(restaurant_name, file_name, file_type, base64_da
             "base64_data": base64_data,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }])
-        images_df = pd.concat([images_df, new_image], ignore_index=True)
-        images_df.to_csv(RESTAURANT_IMAGES_CSV_FILE, index=False)
+        gallery_df = pd.concat([gallery_df, new_image], ignore_index=True)
+        gallery_df.to_csv(GALLERY_CSV_FILE, index=False)
         return True
     except Exception as e:
-        st.error(f"Error saving new restaurant image file to CSV: {e}")
+        st.error(f"Error saving new gallery image to CSV: {e}")
         return False
 
-# --- Function to Load Images from CSV ---
-def load_restaurant_images_from_csv(restaurant_name=None):
-    """Loads images from the CSV file, optionally filtering for a specific restaurant."""
+# --- Function to Load Gallery Images from CSV ---
+def load_gallery_images_from_csv(restaurant_name=None):
+    """Loads gallery images from the CSV file, optionally filtering for a specific restaurant."""
     try:
-        images_df = pd.read_csv(RESTAURANT_IMAGES_CSV_FILE)
+        gallery_df = pd.read_csv(GALLERY_CSV_FILE)
         if restaurant_name:
-            restaurant_images = images_df[images_df["restaurant_name"] == restaurant_name]
+            restaurant_images = gallery_df[gallery_df["restaurant_name"] == restaurant_name]
             return restaurant_images.to_dict(orient="records")
-        return images_df
+        return gallery_df
     except FileNotFoundError:
         return pd.DataFrame() if not restaurant_name else []
     except Exception as e:
-        st.error(f"Error loading images from CSV: {e}")
+        st.error(f"Error loading gallery images from CSV: {e}")
         return pd.DataFrame() if not restaurant_name else []
+
 
 # --- App Title and Header ---
 st.markdown('<h1 class="main-header">🍽️ Singapore Restaurant Guide</h1>', unsafe_allow_html=True)
@@ -528,15 +546,15 @@ if not menus_df.empty:
         help="Click here to download all submitted menus as a CSV file."
     )
     
-images_df = load_restaurant_images_from_csv()
-if not images_df.empty:
-    csv_images = images_df.to_csv(index=False).encode('utf-8')
+gallery_df = load_gallery_images_from_csv()
+if not gallery_df.empty:
+    csv_gallery = gallery_df.to_csv(index=False).encode('utf-8')
     st.sidebar.download_button(
-        label="Download All Restaurant Images",
-        data=csv_images,
-        file_name='restaurant_images.csv',
+        label="Download All Gallery Images",
+        data=csv_gallery,
+        file_name='restaurant_gallery.csv',
         mime='text/csv',
-        help="Click here to download all submitted restaurant images as a CSV file."
+        help="Click here to download all submitted gallery images as a CSV file."
     )
 
 st.sidebar.markdown("---")
@@ -644,26 +662,33 @@ if st.session_state.show_add_restaurant_form:
         new_rating = st.slider("Rating", 0.0, 5.0, 3.0, 0.1, help="Overall rating of the restaurant.")
         new_price = st.selectbox("Price Range", ["$", "$$", "$$$", "$$$$"], index=1, help="$, $$, $$$, or $$$$.")
         new_description = st.text_area("Description", help="A brief description of the restaurant.")
-        uploaded_image = st.file_uploader("Upload Image (Optional)", type=["png", "jpg", "jpeg"], help="Upload a photo of the restaurant.")
-
+        
         new_private_room = st.selectbox("Private Room Available?", ["No", "Yes"], help="Does the restaurant have a private room?")
         new_capacity = None
         if new_private_room == "Yes":
             new_capacity = st.number_input("Max Capacity of Private Room", min_value=1, value=10, step=1, help="Maximum number of people the private room can hold.")
+            
+        new_image_file = st.file_uploader(
+            "Upload an Image",
+            type=["png", "jpg", "jpeg"],
+            help="Upload a photo of the restaurant (optional)."
+        )
 
         col1, col2, col3 = st.columns(3)
 
         with col1:
             if st.button("Add", key="add_restaurant_button"):
                 if new_name and new_cuisine and final_location and new_description and new_address:
-                    image_data = ""
-                    if uploaded_image is not None:
-                        bytes_data = uploaded_image.getvalue()
-                        b64_encoded_image = base64.b64encode(bytes_data).decode('utf-8')
-                        image_data = f"data:{uploaded_image.type};base64,{b64_encoded_image}"
+                    image_data = None
+                    if new_image_file is not None:
+                        # Read file as bytes and encode to base64
+                        file_bytes = new_image_file.getvalue()
+                        base64_data = base64.b64encode(file_bytes).decode('utf-8')
+                        image_data = f"data:{new_image_file.type};base64,{base64_data}"
                     else:
+                        # Use a default placeholder if no image is uploaded
                         image_data = "https://placehold.co/600x400/CCCCCC/000000?text=Image+Not+Available"
-                    
+
                     if add_restaurant_to_csv(new_name, new_cuisine, final_location, new_rating, new_price, new_description, image_data, new_address, new_private_room, new_capacity):
                         st.session_state.add_restaurant_submitted = True
                         st.session_state.show_add_restaurant_form = False
@@ -681,7 +706,6 @@ if st.session_state.show_add_restaurant_form:
                     st.session_state.show_add_restaurant_form = False
                     st.rerun()
 
-
 # --- Display Results ---
 st.markdown('<h2 class="subheader">Available Restaurants</h2>', unsafe_allow_html=True)
 
@@ -692,9 +716,49 @@ if not filtered_df.empty:
     for index, row in filtered_df.iterrows():
         with cols[col_index]:
             with st.container(border=True):
-                # Fallback to the main image if no photos are uploaded
-                image_src = row.get('Image')
-                st.image(image_src, caption=row['Name'], use_container_width=True)
+                restaurant_name = row['Name']
+
+                # Load gallery images for the current restaurant
+                gallery_images = load_gallery_images_from_csv(restaurant_name)
+                
+                # Check if a gallery index exists for this restaurant, if not, initialize it to 0
+                if f'gallery_index_{restaurant_name}' not in st.session_state:
+                    st.session_state[f'gallery_index_{restaurant_name}'] = 0
+
+                # Display the photo gallery
+                with st.container():
+                    st.markdown('<div class="fixed-gallery-container">', unsafe_allow_html=True)
+                    if gallery_images:
+                        current_image_index = st.session_state[f'gallery_index_{restaurant_name}']
+                        current_image_data = gallery_images[current_image_index]
+                        
+                        # Use columns to place the buttons on the sides of the image
+                        btn_col_prev, img_col, btn_col_next = st.columns([1, 6, 1])
+
+                        with btn_col_prev:
+                            # Button to go to the previous image, disabled at the first image
+                            if st.button("◀", key=f"prev_{restaurant_name}", disabled=(current_image_index == 0), help="Previous photo"):
+                                st.session_state[f'gallery_index_{restaurant_name}'] -= 1
+                                st.rerun()
+                                
+                        with img_col:
+                            # Display the current image in the central column
+                            st.image(
+                                f"data:{current_image_data['file_type']};base64,{current_image_data['base64_data']}", 
+                                use_container_width=True
+                            )
+                        
+                        with btn_col_next:
+                            # Button to go to the next image, disabled at the last image
+                            if st.button("▶", key=f"next_{restaurant_name}", disabled=(current_image_index == len(gallery_images) - 1), help="Next photo"):
+                                st.session_state[f'gallery_index_{restaurant_name}'] += 1
+                                st.rerun()
+                        
+                        st.markdown(f'<p style="text-align:center; margin-top: 10px;">{current_image_index + 1} of {len(gallery_images)}</p>', unsafe_allow_html=True)
+
+                    else:
+                        # If no images, show a placeholder inside the fixed container
+                        st.image("https://placehold.co/1600x900/CCCCCC/000000?text=Image+Not+Available", use_container_width=True)
 
                 private_room_info = f"<strong>Private Room:</strong> {row.get('Private Room', 'N/A')}"
                 if row.get('Private Room', 'N/A') == "Yes" and pd.notna(row.get('Max Capacity')):
@@ -707,7 +771,7 @@ if not filtered_df.empty:
                         <strong>Cuisine:</strong> {row['Cuisine']}<br>
                         <strong>Location:</strong> {row['Location']}<br>
                         <strong>Address:</strong> {row['Address']}<br>
-                        <strong>Rating:</strong> {row['Rating']} ⭐<br>
+                        <strong>Rating:</strong> {row['Rating']:.1f} ⭐<br>
                         <strong>Price:</strong> {row['Price Range']}<br>
                         {private_room_info}
                     </div>
@@ -715,7 +779,7 @@ if not filtered_df.empty:
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Create a three-column layout for the buttons
+                # Create a four-column layout for the buttons
                 btn_col1, btn_col2, btn_col3 = st.columns(3)
 
                 with btn_col1:
@@ -723,24 +787,23 @@ if not filtered_df.empty:
                         st.session_state.review_restaurant_name = row['Name']
                         st.session_state.review_submitted_message = None
                         st.session_state.add_menu_for_restaurant = None # Close menu form
-                        st.session_state.add_image_for_restaurant = None # Close image form
+                        st.session_state.add_photo_for_restaurant = None # Close photo upload form
                         st.rerun()
-
+                
                 with btn_col2:
                     if st.button("Upload Menu", key=f"add_menu_for_{row['Name']}"):
                         st.session_state.add_menu_for_restaurant = row['Name']
                         st.session_state.review_restaurant_name = None # Close review form
-                        st.session_state.add_image_for_restaurant = None # Close image form
+                        st.session_state.add_photo_for_restaurant = None # Close photo upload form
                         st.rerun()
-                
+
                 with btn_col3:
-                    if st.button("Upload Images", key=f"add_images_for_{row['Name']}"):
-                        st.session_state.add_image_for_restaurant = row['Name']
+                    if st.button("Upload Photo", key=f"add_photo_for_{row['Name']}"):
+                        st.session_state.add_photo_for_restaurant = row['Name']
                         st.session_state.review_restaurant_name = None # Close review form
                         st.session_state.add_menu_for_restaurant = None # Close menu form
                         st.rerun()
-
-
+                
                 # Display the 'Upload Menu' form if the button was clicked
                 if st.session_state.add_menu_for_restaurant == row['Name']:
                     with st.container(border=True):
@@ -756,7 +819,6 @@ if not filtered_df.empty:
                             if st.button("Upload File", key=f"submit_menu_upload_{row['Name']}"):
                                 if uploaded_menu_file is not None:
                                     try:
-                                        # Read file as bytes and encode to base64
                                         file_bytes = uploaded_menu_file.getvalue()
                                         base64_data = base64.b64encode(file_bytes).decode('utf-8')
                                         file_name = uploaded_menu_file.name
@@ -777,27 +839,29 @@ if not filtered_df.empty:
                                 st.session_state.add_menu_for_restaurant = None
                                 st.rerun()
 
-                # Display the 'Upload Image' form if the button was clicked
-                if st.session_state.add_image_for_restaurant == row['Name']:
+                # Display the 'Upload Photo' form if the button was clicked
+                if st.session_state.add_photo_for_restaurant == row['Name']:
                     with st.container(border=True):
-                        st.markdown(f"**Upload new images for {row['Name']}:**")
-                        uploaded_image_file = st.file_uploader(
-                            "Upload an image file (PNG, JPG, JPEG)",
+                        st.markdown(f"**Upload a new photo for {row['Name']}:**")
+                        uploaded_photo_file = st.file_uploader(
+                            "Upload a photo (PNG, JPG, JPEG)",
                             type=["png", "jpg", "jpeg"],
-                            key=f"image_uploader_{row['Name']}"
+                            key=f"photo_uploader_{row['Name']}"
                         )
+                        
                         upload_col, cancel_col = st.columns(2)
                         with upload_col:
-                            if st.button("Upload Image", key=f"submit_image_upload_{row['Name']}"):
-                                if uploaded_image_file is not None:
+                            if st.button("Upload Photo", key=f"submit_photo_upload_{row['Name']}"):
+                                if uploaded_photo_file is not None:
                                     try:
-                                        file_bytes = uploaded_image_file.getvalue()
+                                        file_bytes = uploaded_photo_file.getvalue()
                                         base64_data = base64.b64encode(file_bytes).decode('utf-8')
-                                        file_name = uploaded_image_file.name
-                                        file_type = uploaded_image_file.type
-                                        if add_restaurant_image_to_csv(row['Name'], file_name, file_type, base64_data):
-                                            st.success(f"Image '{file_name}' uploaded successfully to {row['Name']}!", icon="✅")
-                                            st.session_state.add_image_for_restaurant = None
+                                        file_name = uploaded_photo_file.name
+                                        file_type = uploaded_photo_file.type
+
+                                        if add_gallery_image_to_csv(row['Name'], file_name, file_type, base64_data):
+                                            st.success(f"Photo '{file_name}' uploaded successfully to {row['Name']}'s gallery!", icon="✅")
+                                            st.session_state.add_photo_for_restaurant = None
                                             st.cache_data.clear()
                                             time.sleep(2)
                                             st.rerun()
@@ -806,10 +870,10 @@ if not filtered_df.empty:
                                 else:
                                     st.warning("Please select a file to upload.", icon="⚠️")
                         with cancel_col:
-                            if st.button("Cancel Upload", key=f"cancel_image_upload_{row['Name']}"):
-                                st.session_state.add_image_for_restaurant = None
+                            if st.button("Cancel Upload", key=f"cancel_photo_upload_{row['Name']}"):
+                                st.session_state.add_photo_for_restaurant = None
                                 st.rerun()
-                
+
                 # Display the 'Submit Review' form if the button was clicked
                 if st.session_state.review_restaurant_name == row['Name']:
                     st.markdown(f"**Review for {row['Name']}:**")
@@ -839,22 +903,7 @@ if not filtered_df.empty:
                     if st.session_state.review_submitted_message.startswith(f"Thank you for your review of {row['Name']}"):
                         st.success(st.session_state.review_submitted_message, icon="✅")
                         st.session_state.review_submitted_message = None
-                
-                with st.expander(f"Uploaded Restaurant Photos"):
-                    restaurant_images = load_restaurant_images_from_csv(row['Name'])
-                    if restaurant_images:
-                        image_display_cols = st.columns(3)
-                        for i, image in enumerate(restaurant_images):
-                            with image_display_cols[i % 3]:
-                                file_type = image.get('file_type')
-                                base64_data = image.get('base64_data')
-                                if file_type and file_type.startswith('image/'):
-                                    st.image(f"data:{file_type};base64,{base64_data}", use_container_width=True)
-                                else:
-                                    st.markdown(f'<div style="text-align: center; color: #888; font-size: 0.8rem;">No Image</div>', unsafe_allow_html=True)
-                    else:
-                        st.info("No photos have been uploaded for this restaurant yet.")
-                
+
                 with st.expander(f"Past Curated Menus"):
                     menus = load_menus_from_csv(row['Name'])
                     if menus:
@@ -866,10 +915,11 @@ if not filtered_df.empty:
                                 base64_data = menu.get('base64_data')
 
                                 # Safely check for file type before processing
-                                if file_type and file_type.startswith('image/'):
+                                if file_type and isinstance(file_type, str) and file_type.startswith('image/'):
                                     st.write(f"**{menu.get('file_name', 'Menu File')}**")
                                     st.image(f"data:{file_type};base64,{base64_data}", use_container_width=True)
-                                elif file_type == 'application/pdf':
+                                # Also apply the same check for PDF files
+                                elif file_type and isinstance(file_type, str) and file_type == 'application/pdf':
                                     st.write(f"**{menu.get('file_name', 'Menu File')}**")
                                     # Create a download button for the PDF
                                     st.download_button(
@@ -890,7 +940,14 @@ if not filtered_df.empty:
                     reviews = load_reviews_from_csv(row['Name'])
                     if reviews:
                         for review in reviews:
-                            st.markdown(f"**Rating:** {review.get('rating', 'N/A')} ⭐")
+                            # Safely handle the rating to avoid the float format error
+                            review_rating = review.get('rating', 'N/A')
+                            if isinstance(review_rating, (int, float)):
+                                review_rating_str = f"{review_rating:.1f}"
+                            else:
+                                review_rating_str = str(review_rating)
+                                
+                            st.markdown(f"**Rating:** {review_rating_str} ⭐")
                             st.write(f"**Review:** {review.get('review_text', 'No review text.')}")
                             
                             reviewer_info = []
