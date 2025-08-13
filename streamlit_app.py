@@ -597,14 +597,15 @@ if not df.empty:
         else:
             st.sidebar.info("No restaurants with private rooms have a capacity specified.")
 
-
     # --- Apply Filters ---
     filtered_df = df.copy()
+    reviews_df = reviews_df.copy()
 
     if search_query:
         filtered_df = filtered_df[
             filtered_df["Name"].str.contains(search_query, case=False, na=False) |
-            filtered_df["Description"].str.contains(search_query, case=False, na=False)
+            filtered_df["Description"].str.contains(search_query, case=False, na=False) |
+            reviews_df["review_text"].str.contains(search_query, case=False, na=False)
         ]
 
     if selected_cuisine != "All":
@@ -624,10 +625,9 @@ if not df.empty:
             # Check for NaN values before filtering
             filtered_df = filtered_df[pd.to_numeric(filtered_df['Max Capacity'], errors='coerce').notna()]
             filtered_df = filtered_df[filtered_df["Max Capacity"] >= min_capacity_filter]
-
+    
 else:
-    filtered_df = pd.DataFrame()
-
+     filtered_df = pd.DataFrame()
 
 # --- Add New Restaurant Button ---
 st.write("Have a new restaurant to include? ")
