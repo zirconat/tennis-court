@@ -6,6 +6,7 @@ import time
 import base64
 import io
 import numpy as np
+import re
 
 # --- CSV File Configuration ---
 RESTAURANTS_CSV_FILE = "restaurants.csv"
@@ -35,134 +36,15 @@ def initialize_csv_files():
     """
     # Restaurant data initialization
     if not os.path.exists(RESTAURANTS_CSV_FILE):
-        restaurant_data = [
-            {
-                "Name": "The Dempsey Cookhouse & Bar",
-                "Cuisine": "Modern European",
-                "Location": "Dempsey Hill",
-                "Rating": 4.5,
-                "Price Range": "$$$",
-                "Description": "Chic restaurant by Jean-Georges Vongerichten, offering a sophisticated dining experience.",
-                "Image": "https://placehold.co/600x400/FF5733/FFFFFF?text=Dempsey+Cookhouse", # Retained for initial data only
-                "Address": "17D Dempsey Rd, Singapore 249676",
-                "Private Room": "No",
-                "Max Capacity": None
-            },
-            {
-                "Name": "Odette",
-                "Cuisine": "French",
-                "Location": "City Hall",
-                "Rating": 5.0,
-                "Price Range": "$$$$",
-                "Description": "Three Michelin-starred modern French restaurant, known for its exquisite tasting menus.",
-                "Image": "https://placehold.co/600x400/33FF57/000000?text=Odette", # Retained for initial data only
-                "Address": "1 St Andrew's Rd, #01-04 National Gallery, Singapore 178957",
-                "Private Room": "Yes",
-                "Max Capacity": 12
-            },
-            {
-                "Name": "Burnt Ends",
-                "Cuisine": "Australian BBQ",
-                "Location": "Outram Park",
-                "Rating": 4.7,
-                "Price Range": "$$$",
-                "Description": "Modern Australian barbecue with an open-concept kitchen and custom-built ovens.",
-                "Image": "https://placehold.co/600x400/3357FF/FFFFFF?text=Burnt+Ends", # Retained for initial data only
-                "Address": "7 Dempsey Rd, #01-04, Singapore 249671",
-                "Private Room": "No",
-                "Max Capacity": None
-            },
-            {
-                "Name": "Candlenut",
-                "Cuisine": "Peranakan",
-                "Location": "Dempsey Hill",
-                "Rating": 4.3,
-                "Price Range": "$$",
-                "Description": "The world's first Michelin-starred Peranakan restaurant, offering refined Straits-Chinese cuisine.",
-                "Image": "https://placehold.co/600x400/FF33A1/FFFFFF?text=Candlenut", # Retained for initial data only
-                "Address": "17A Dempsey Rd, Singapore 249676",
-                "Private Room": "Yes",
-                "Max Capacity": 8
-            },
-            {
-                "Name": "Jumbo Seafood",
-                "Cuisine": "Seafood",
-                "Location": "Riverside Point",
-                "Rating": 4.2,
-                "Price Range": "$$",
-                "Description": "Famous for its Chili Crab and Black Pepper Crab, a must-visit for seafood lovers.",
-                "Image": "https://placehold.co/600x400/A1FF33/000000?text=Jumbo+Seafood", # Retained for initial data only
-                "Address": "301 Upper East Coast Rd, Singapore 466444",
-                "Private Room": "Yes",
-                "Max Capacity": 20
-            },
-            {
-                "Name": "Tiong Bahru Bakery",
-                "Cuisine": "Cafe",
-                "Location": "Tiong Bahru",
-                "Rating": 4.0,
-                "Price Range": "$",
-                "Description": "Popular spot for freshly baked pastries, coffee, and a relaxed atmosphere.",
-                "Image": "https://placehold.co/600x400/33A1FF/FFFFFF?text=Tiong+Bahru+Bakery", # Retained for initial data only
-                "Address": "56 Eng Hoon St, #01-70, Singapore 160056",
-                "Private Room": "No",
-                "Max Capacity": None
-            },
-            {
-                "Name": "Newton Food Centre",
-                "Cuisine": "Local Hawker",
-                "Location": "Newton",
-                "Rating": 3.8,
-                "Price Range": "$",
-                "Description": "An iconic hawker centre offering a wide variety of local Singaporean dishes.",
-                "Image": "https://placehold.co/600x400/FFBB33/000000?text=Newton+Food+Centre", # Retained for initial data only
-                "Address": "500 Clemenceau Ave N, Singapore 229495",
-                "Private Room": "No",
-                "Max Capacity": None
-            },
-            {
-                "Name": "PS.Cafe Harding Road",
-                "Cuisine": "Western/Cafe",
-                "Location": "Dempsey Hill",
-                "Rating": 4.1,
-                "Price Range": "$$",
-                "Description": "A popular cafe chain known for its truffle fries, relaxed ambiance, and lush surroundings.",
-                "Image": "https://placehold.co/600x400/BB33FF/FFFFFF?text=PS.Cafe", # Retained for initial data only
-                "Address": "28B Harding Rd, Singapore 249549",
-                "Private Room": "Yes",
-                "Max Capacity": 6
-            },
-            {
-                "Name": "National Kitchen by Violet Oon",
-                "Cuisine": "Peranakan",
-                "Location": "City Hall",
-                "Rating": 4.4,
-                "Price Range": "$$$",
-                "Description": "Elegant restaurant serving classic Peranakan dishes in a grand setting at the National Gallery.",
-                "Image": "https://placehold.co/600x400/33FFBB/000000?text=National+Kitchen", # Retained for initial data only
-                "Address": "1 St Andrew's Rd, #02-01 National Gallery, Singapore 178957",
-                "Private Room": "Yes",
-                "Max Capacity": 10
-            },
-            {
-                "Name": "Les Amis",
-    "Cuisine": "French",
-    "Location": "Orchard",
-    "Rating": 4.9,
-    "Price Range": "$$$$",
-    "Description": "One of Singapore's oldest independent fine-dining French restaurants, with three Michelin stars.",
-    "Image": "https://placehold.co/600x400/FF3333/FFFFFF?text=Les+Amis", # Retained for initial data only
-    "Address": "1 Scotts Rd, #02-16 Shaw Centre, Singapore 228208",
-    "Private Room": "Yes",
-    "Max Capacity": 16
-            }
-        ]
-        initial_restaurants_df = pd.DataFrame(restaurant_data)
-        initial_restaurants_df.to_csv(RESTAURANTS_CSV_FILE, index=False)
+        empty_df = pd.DataFrame(columns=[
+            "Name", "Cuisine", "Location", "Rating", "Price Range",
+            "Description", "Image", "Address", "Private Room", "Max Capacity"
+        ])
+        empty_df.to_csv(RESTAURANTS_CSV_FILE, index=False)
         with st.empty():
-            st.success("Restaurants data initialized.", icon="✅")
+            st.success("Restaurants data file created.", icon="✅")
             time.sleep(2)
-    
+
     # Reviews data initialization
     if not os.path.exists(REVIEWS_CSV_FILE):
         initial_reviews_df = pd.DataFrame(columns=[
@@ -186,7 +68,6 @@ def initialize_csv_files():
         ])
         initial_gallery_df.to_csv(GALLERY_CSV_FILE, index=False)
 
-
 initialize_csv_files()
 
 # --- Session State Initialization ---
@@ -206,7 +87,6 @@ if 'add_menu_for_restaurant' not in st.session_state:
     st.session_state.add_menu_for_restaurant = None
 if 'add_photo_for_restaurant' not in st.session_state:
     st.session_state.add_photo_for_restaurant = None
-
 
 # --- Load restaurant data from CSV ---
 @st.cache_data
@@ -498,14 +378,106 @@ def load_gallery_images_from_csv(restaurant_name=None):
         st.error(f"Error loading gallery images from CSV: {e}")
         return pd.DataFrame() if not restaurant_name else []
 
+# --- Function to find restaurants based on filters ---
+def find_restaurants(df_restaurants, df_reviews, search_query, selected_cuisine, selected_location_filter, selected_price_range, min_rating, selected_private_room_filter, min_capacity_filter):
+    """
+    Finds restaurants based on the provided filters and an improved search query,
+    now including support for exact phrases (""), AND (&), and OR (,) conditions.
+    """
+    filtered_df = df_restaurants.copy()
+    
+    # 1. Handle Search Query
+    if search_query:
+        # Step 1: Initialize an empty DataFrame to store all matching restaurants
+        combined_matches = pd.DataFrame(columns=filtered_df.columns)
+        
+        # Step 2: Split query into individual terms based on commas (OR) or ampersands (AND)
+        if '&' in search_query:
+            search_terms = [term.strip() for term in search_query.split('&')]
+            operator = 'AND'
+        else:
+            search_terms = [term.strip() for term in search_query.split(',')]
+            operator = 'OR'
+
+        first_term = True
+        for term in search_terms:
+            current_matches = pd.DataFrame(columns=filtered_df.columns)
+            
+            # Check for exact phrase search
+            if term.startswith('"') and term.endswith('"'):
+                exact_phrase = term.strip('"')
+                
+                # Regex search for the exact phrase in Name, Description, and reviews
+                name_desc_matches = filtered_df[
+                    filtered_df["Name"].str.contains(re.escape(exact_phrase), case=False, na=False) |
+                    filtered_df["Description"].str.contains(re.escape(exact_phrase), case=False, na=False)
+                ]
+                
+                # Find matching restaurants based on review text
+                matching_review_names = df_reviews[
+                    df_reviews['review_text'].str.contains(re.escape(exact_phrase), case=False, na=False)
+                ]['restaurant_name'].unique()
+                review_matches = filtered_df[filtered_df['Name'].isin(matching_review_names)]
+                
+                current_matches = pd.concat([name_desc_matches, review_matches]).drop_duplicates(subset=["Name"])
+                
+            else:
+                # Regular substring search for the term
+                name_desc_matches = filtered_df[
+                    filtered_df["Name"].str.contains(term, case=False, na=False) |
+                    filtered_df["Description"].str.contains(term, case=False, na=False)
+                ]
+                
+                # Find matching restaurants based on review text
+                matching_review_names = df_reviews[
+                    df_reviews['review_text'].str.contains(term, case=False, na=False)
+                ]['restaurant_name'].unique()
+                review_matches = filtered_df[filtered_df['Name'].isin(matching_review_names)]
+                
+                current_matches = pd.concat([name_desc_matches, review_matches]).drop_duplicates(subset=["Name"])
+            
+            if operator == 'OR':
+                combined_matches = pd.concat([combined_matches, current_matches]).drop_duplicates(subset=["Name"])
+            elif operator == 'AND':
+                if first_term:
+                    combined_matches = current_matches
+                    first_term = False
+                else:
+                    # Keep only restaurants that are in both the previous and current matches
+                    combined_matches = combined_matches.merge(current_matches, on=filtered_df.columns.tolist())
+        
+        # Apply the search results for subsequent filtering
+        filtered_df = combined_matches.reset_index(drop=True)
+    
+    # 2. Apply Other Filters
+    if selected_cuisine != "All":
+        filtered_df = filtered_df[filtered_df["Cuisine"] == selected_cuisine]
+
+    if selected_location_filter != "All":
+        filtered_df = filtered_df[filtered_df["Location"] == selected_location_filter]
+
+    if selected_price_range != "All":
+        filtered_df = filtered_df[filtered_df["Price Range"] == selected_price_range]
+
+    filtered_df = filtered_df[filtered_df["Rating"] >= min_rating]
+    
+    if selected_private_room_filter != "All":
+        filtered_df = filtered_df[filtered_df["Private Room"] == selected_private_room_filter]
+        if selected_private_room_filter == "Yes" and min_capacity_filter is not None:
+            # Check for NaN values before filtering
+            filtered_df = filtered_df[pd.to_numeric(filtered_df['Max Capacity'], errors='coerce').notna()]
+            filtered_df = filtered_df[filtered_df["Max Capacity"] >= min_capacity_filter]
+    
+    return filtered_df
 
 # --- App Title and Header ---
 st.markdown('<h1 class="main-header">🍽️ Singapore Restaurant Guide</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align: center; color: #666; font-size: 1.1em; font-family: \'Inter\', sans-serif;">Discover and add the best dining experiences in Singapore!</p>', unsafe_allow_html=True)
 
-
 # --- Sidebar for File Upload and Filters ---
+st.sidebar.caption("For admin use only")
 st.sidebar.header("Data Source")
+
 uploaded_file = st.sidebar.file_uploader("Upload your own restaurant database (CSV)", type=["csv"], help="Upload a CSV file with 'Name', 'Cuisine', 'Location', 'Rating', 'Price Range', 'Description', 'Image', 'Address', 'Private Room', and 'Max Capacity' columns.")
 
 if uploaded_file is not None:
@@ -569,7 +541,7 @@ st.sidebar.markdown("---")
 
 st.sidebar.header("Filter Restaurants")
 
-search_query = st.sidebar.text_input("Search by Name or Description", "")
+search_query = st.sidebar.text_input("Search by Restaurant Name, Description, or Reviews", "")
 
 if not df.empty:
     cuisine_options = ["All"] + sorted(df["Cuisine"].unique().tolist())
@@ -601,33 +573,20 @@ if not df.empty:
     filtered_df = df.copy()
     reviews_df = reviews_df.copy()
 
-    if search_query:
-        filtered_df = filtered_df[
-            filtered_df["Name"].str.contains(search_query, case=False, na=False) |
-            filtered_df["Description"].str.contains(search_query, case=False, na=False) |
-            reviews_df["review_text"].str.contains(search_query, case=False, na=False)
-        ]
-
-    if selected_cuisine != "All":
-        filtered_df = filtered_df[filtered_df["Cuisine"] == selected_cuisine]
-
-    if selected_location_filter != "All":
-        filtered_df = filtered_df[filtered_df["Location"] == selected_location_filter]
-
-    if selected_price_range != "All":
-        filtered_df = filtered_df[filtered_df["Price Range"] == selected_price_range]
-
-    filtered_df = filtered_df[filtered_df["Rating"] >= min_rating]
-    
-    if selected_private_room_filter != "All":
-        filtered_df = filtered_df[filtered_df["Private Room"] == selected_private_room_filter]
-        if selected_private_room_filter == "Yes" and min_capacity_filter is not None:
-            # Check for NaN values before filtering
-            filtered_df = filtered_df[pd.to_numeric(filtered_df['Max Capacity'], errors='coerce').notna()]
-            filtered_df = filtered_df[filtered_df["Max Capacity"] >= min_capacity_filter]
+    filtered_df = find_restaurants(
+        df_restaurants=df,
+        df_reviews=reviews_df,
+        search_query=search_query,
+        selected_cuisine=selected_cuisine,
+        selected_location_filter=selected_location_filter,
+        selected_price_range=selected_price_range,
+        min_rating=min_rating,
+        selected_private_room_filter=selected_private_room_filter,
+        min_capacity_filter=min_capacity_filter
+    )
     
 else:
-     filtered_df = pd.DataFrame()
+    filtered_df = pd.DataFrame()
 
 # --- Add New Restaurant Button ---
 st.write("Have a new restaurant to include? ")
