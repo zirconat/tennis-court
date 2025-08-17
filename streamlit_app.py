@@ -96,6 +96,8 @@ if 'username' not in st.session_state:
     st.session_state.username = None
 if 'is_admin' not in st.session_state:
     st.session_state.is_admin = False
+if 'edit_restaurant_name' not in st.session_state:
+    st.session_state.edit_restaurant_name = None
 
 # --- Load restaurant data from CSV ---
 @st.cache_data
@@ -302,6 +304,25 @@ def add_restaurant_to_csv(name, cuisine, location, rating, price_range, descript
     except Exception as e:
         st.error(f"Error saving new restaurant to CSV: {e}")
         return False
+        
+# --- Function to Update an Existing Restaurant in CSV ---
+def update_restaurant_in_csv(original_name, new_details):
+    """Updates an existing restaurant's details in the restaurants.csv file."""
+    try:
+        restaurants_df = pd.read_csv(RESTAURANTS_CSV_FILE)
+        # Find the index of the row to update
+        idx_to_update = restaurants_df[restaurants_df['Name'] == original_name].index
+        if idx_to_update.empty:
+            st.error(f"Could not find restaurant '{original_name}' to update.")
+            return False
+
+        # Update the row with new details
+        restaurants_df.loc[idx_to_update, new_details.keys()] = new_details.values()
+        restaurants_df.to_csv(RESTAURANTS_CSV_FILE, index=False)
+        return True
+    except Exception as e:
+        st.error(f"Error updating restaurant in CSV: {e}")
+        return False
 
 # --- Function to Load Reviews from CSV ---
 def load_reviews_from_csv(restaurant_name=None):
@@ -478,8 +499,7 @@ def find_restaurants(df_restaurants, df_reviews, search_query, selected_cuisine,
             filtered_df = filtered_df[filtered_df["Max Capacity"] >= min_capacity_filter]
     
     return filtered_df
-
-
+    
 # --- App Title and Header ---
 st.markdown('<h1 class="main-header">🍽️ Singapore Restaurant Guide</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align: center; color: #666; font-size: 1.1em; font-family: \'Inter\', sans-serif;">Discover and add the best dining experiences in Singapore!</p>', unsafe_allow_html=True)
@@ -606,6 +626,7 @@ st.write("Have a new restaurant to include? ")
 if st.button("➕ Add a New Restaurant"):
     st.session_state.show_add_restaurant_form = True
     st.session_state.new_location_selected = False
+    st.session_state.edit_restaurant_name = None # Ensure edit form is closed
 
 # --- Add New Restaurant Form (simulated pop-up) ---
 if st.session_state.show_add_restaurant_form:
@@ -695,258 +716,326 @@ if not filtered_df.empty:
 
     for index, row in filtered_df.iterrows():
         with cols[col_index]:
-            with st.container(border=True):
-                restaurant_name = row['Name']
+            # Conditional rendering: show edit form if this is the restaurant to be edited
+            if st.session_state.edit_restaurant_name == row['Name']:
+                with st.container(border=True):
+                    st.markdown(f'<h3>Edit {row["Name"]}</h3>', unsafe_allow_html=True)
 
-                # Load gallery images for the current restaurant
-                gallery_images = load_gallery_images_from_csv(restaurant_name)
-                
-                # Check if a gallery index exists for this restaurant, if not, initialize it to 0
-                if f'gallery_index_{restaurant_name}' not in st.session_state:
-                    st.session_state[f'gallery_index_{restaurant_name}'] = 0
-
-                # Display the photo gallery
-                with st.container():
-                    # The gallery buttons and image are placed in a container for a cohesive look
-                    st.markdown('<div class="fixed-gallery-container">', unsafe_allow_html=True)
-                    if gallery_images:
-                        current_image_index = st.session_state[f'gallery_index_{restaurant_name}']
-                        current_image_data = gallery_images[current_image_index]
-                            
-                        # Use columns to place the buttons on the sides of the image
-                        btn_col_prev, img_col, btn_col_next = st.columns([1, 6, 1])
-
-                        with btn_col_prev:
-                            # Button to go to the previous image, disabled at the first image
-                            if st.button("◀", key=f"prev_{restaurant_name}", disabled=(current_image_index == 0), help="Previous photo"):
-                                st.session_state[f'gallery_index_{restaurant_name}'] -= 1
-                                st.rerun()
-                                    
-                        with img_col:
-                            # Display the current image in the central column
-                            st.image(
-                                f"data:{current_image_data['file_type']};base64,{current_image_data['base64_data']}", 
-                                use_container_width=True
-                            )
-                            
-                        with btn_col_next:
-                            # Button to go to the next image, disabled at the last image
-                            if st.button("▶", key=f"next_{restaurant_name}", disabled=(current_image_index == len(gallery_images) - 1), help="Next photo"):
-                                st.session_state[f'gallery_index_{restaurant_name}'] += 1
-                                st.rerun()
-                            
-                        st.markdown(f'<p style="text-align:center; margin-top: 10px;">{current_image_index + 1} of {len(gallery_images)}</p>', unsafe_allow_html=True)
-
-                    else:
-                        # If no images, show a placeholder inside the fixed container
-                        st.image("https://placehold.co/1600x900/CCCCCC/000000?text=Image+Not+Available", use_container_width=True)
-
-                private_room_info = f"<strong>Private Room:</strong> {row.get('Private Room', 'N/A')}"
-                if row.get('Private Room', 'N/A') == "Yes" and pd.notna(row.get('Max Capacity')):
-                    private_room_info += f" (Max Capacity: {int(row['Max Capacity'])})"
-
-                st.markdown(f"""
-                <div class="restaurant-card">
-                    <div class="restaurant-name">{row['Name']}</div>
-                    <div class="restaurant-details">
-                        <strong>Cuisine:</strong> {row['Cuisine']}<br>
-                        <strong>Location:</strong> {row['Location']}<br>
-                        <strong>Address:</strong> {row['Address']}<br>
-                        <strong>Rating:</strong> {row['Rating']:.1f} ⭐<br>
-                        <strong>Price:</strong> {row['Price Range']}<br>
-                        {private_room_info}
-                    </div>
-                    <div class="restaurant-description">{row['Description']}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                    # Pre-populate form fields with existing data
+                    edit_name = st.text_input("Restaurant Name", value=row['Name'], key=f"edit_name_{row['Name']}")
+                    edit_cuisine = st.text_input("Cuisine", value=row['Cuisine'], key=f"edit_cuisine_{row['Name']}")
+                    edit_location = st.text_input("Location", value=row['Location'], key=f"edit_location_{row['Name']}")
+                    edit_address = st.text_input("Address", value=row['Address'], key=f"edit_address_{row['Name']}")
+                    edit_rating = st.slider("Rating", 0.0, 5.0, float(row['Rating']), 0.1, key=f"edit_rating_{row['Name']}")
                     
-                # Create a four-column layout for the buttons
-                btn_col1, btn_col2, btn_col3 = st.columns(3)
-
-                with btn_col1:
-                    if st.button("Submit Review", key=f"submit_review_for_{row['Name']}"):
-                        st.session_state.review_restaurant_name = row['Name']
-                        st.session_state.review_submitted_message = None
-                        st.session_state.add_menu_for_restaurant = None # Close menu form
-                        st.session_state.add_photo_for_restaurant = None # Close photo upload form
-                        st.rerun()
+                    price_range_options = ["$", "$$", "$$$", "$$$$"]
+                    edit_price_index = price_range_options.index(row['Price Range']) if row['Price Range'] in price_range_options else 0
+                    edit_price = st.selectbox("Price Range", price_range_options, index=edit_price_index, key=f"edit_price_{row['Name']}")
                     
-                with btn_col2:
-                    if st.button("Upload Menu", key=f"add_menu_for_{row['Name']}"):
-                        st.session_state.add_menu_for_restaurant = row['Name']
-                        st.session_state.review_restaurant_name = None # Close review form
-                        st.session_state.add_photo_for_restaurant = None # Close photo upload form
-                        st.rerun()
-
-                with btn_col3:
-                    if st.button("Upload Photo", key=f"add_photo_for_{row['Name']}"):
-                        st.session_state.add_photo_for_restaurant = row['Name']
-                        st.session_state.review_restaurant_name = None # Close review form
-                        st.session_state.add_menu_for_restaurant = None # Close menu form
-                        st.rerun()
+                    edit_description = st.text_area("Description", value=row['Description'], key=f"edit_description_{row['Name']}")
                     
-                # Display the 'Upload Menu' form if the button was clicked
-                if st.session_state.add_menu_for_restaurant == row['Name']:
-                    with st.container(border=True):
-                        st.markdown(f"**Upload a new menu for {row['Name']}:**")
-                        uploaded_menu_file = st.file_uploader(
-                            "Upload a menu file (PDF or Image)",
-                            type=["pdf", "png", "jpg", "jpeg"],
-                            key=f"menu_uploader_{row['Name']}"
-                        )
-
-                        upload_col, cancel_col = st.columns(2)
-                        with upload_col:
-                            if st.button("Upload File", key=f"submit_menu_upload_{row['Name']}"):
-                                if uploaded_menu_file is not None:
-                                    try:
-                                        file_bytes = uploaded_menu_file.getvalue()
-                                        base64_data = base64.b64encode(file_bytes).decode('utf-8')
-                                        file_name = uploaded_menu_file.name
-                                        file_type = uploaded_menu_file.type
-
-                                        if add_menu_item_to_csv(row['Name'], file_name, file_type, base64_data):
-                                            st.success(f"Menu '{file_name}' uploaded successfully to {row['Name']}!", icon="✅")
-                                            st.session_state.add_menu_for_restaurant = None
-                                            st.cache_data.clear()
-                                            time.sleep(2)
-                                            st.rerun()
-                                    except Exception as e:
-                                        st.error(f"Error processing file: {e}")
-                                else:
-                                    st.warning("Please select a file to upload.", icon="⚠️")
-                        with cancel_col:
-                            if st.button("Cancel Upload", key=f"cancel_menu_upload_{row['Name']}"):
-                                st.session_state.add_menu_for_restaurant = None
+                    private_room_options = ["No", "Yes"]
+                    edit_private_room_index = private_room_options.index(row['Private Room']) if row['Private Room'] in private_room_options else 0
+                    edit_private_room = st.selectbox("Private Room Available?", private_room_options, index=edit_private_room_index, key=f"edit_private_room_{row['Name']}")
+                    
+                    edit_capacity = None
+                    if edit_private_room == "Yes":
+                        # Convert float to int for the number_input
+                        current_capacity = int(row['Max Capacity']) if pd.notna(row['Max Capacity']) else 10
+                        edit_capacity = st.number_input("Max Capacity of Private Room", min_value=1, value=current_capacity, step=1, key=f"edit_capacity_{row['Name']}")
+                    
+                    col_save, col_cancel = st.columns([1, 1])
+                    with col_save:
+                        if st.button("Save Changes", key=f"save_changes_{row['Name']}"):
+                            # Create a dictionary of updated details
+                            updated_details = {
+                                "Name": edit_name,
+                                "Cuisine": edit_cuisine,
+                                "Location": edit_location,
+                                "Address": edit_address,
+                                "Rating": edit_rating,
+                                "Price Range": edit_price,
+                                "Description": edit_description,
+                                "Private Room": edit_private_room,
+                                "Max Capacity": edit_capacity
+                            }
+                            if update_restaurant_in_csv(row['Name'], updated_details):
+                                st.success(f"Restaurant '{edit_name}' updated successfully!", icon="✅")
+                                st.session_state.edit_restaurant_name = None
+                                st.cache_data.clear()
+                                time.sleep(2)
                                 st.rerun()
-
-                # Display the 'Upload Photo' form if the button was clicked
-                if st.session_state.add_photo_for_restaurant == row['Name']:
-                    with st.container(border=True):
-                        st.markdown(f"**Upload a new photo for {row['Name']}:**")
-                        uploaded_photo_file = st.file_uploader(
-                            "Upload a photo (PNG, JPG, JPEG)",
-                            type=["png", "jpg", "jpeg"],
-                            key=f"photo_uploader_{row['Name']}"
-                        )
-                            
-                        upload_col, cancel_col = st.columns(2)
-                        with upload_col:
-                            if st.button("Upload Photo", key=f"submit_photo_upload_{row['Name']}"):
-                                if uploaded_photo_file is not None:
-                                    try:
-                                        file_bytes = uploaded_photo_file.getvalue()
-                                        base64_data = base64.b64encode(file_bytes).decode('utf-8')
-                                        file_name = uploaded_photo_file.name
-                                        file_type = uploaded_photo_file.type
-
-                                        if add_gallery_image_to_csv(row['Name'], file_name, file_type, base64_data):
-                                            st.success(f"Photo '{file_name}' uploaded successfully to {row['Name']}'s gallery!", icon="✅")
-                                            st.session_state.add_photo_for_restaurant = None
-                                            st.cache_data.clear()
-                                            time.sleep(2)
-                                            st.rerun()
-                                    except Exception as e:
-                                        st.error(f"Error processing file: {e}")
-                                else:
-                                    st.warning("Please select a file to upload.", icon="⚠️")
-                        with cancel_col:
-                            if st.button("Cancel Upload", key=f"cancel_photo_upload_{row['Name']}"):
-                                st.session_state.add_photo_for_restaurant = None
-                                st.rerun()
-
-                # Display the 'Submit Review' form if the button was clicked
-                if st.session_state.review_restaurant_name == row['Name']:
-                    st.markdown(f"**Review for {row['Name']}:**")
-                    reviewer_name = st.text_input("Your Name:", key=f"reviewer_name_{row['Name']}")
-                    reviewer_department = st.text_input("Your Department:", key=f"reviewer_dept_{row['Name']}")
-                    reviewer_designation = st.text_input("Your Designation:", key=f"reviewer_designation_{row['Name']}")
-                    review_rating = st.slider("Rating", 0.0, 5.0, 3.0, 0.5, key=f"review_rating_{row['Name']}")
-                    review_text = st.text_area("Your comments:", key=f"review_text_{row['Name']}")
-                        
-                    submit_col, cancel_col = st.columns(2)
-                    with submit_col:
-                        if st.button("Submit", key=f"submit_review_form_{row['Name']}"):
-                            if review_text and reviewer_name:
-                                if save_review_to_csv(row['Name'], review_rating, review_text, reviewer_name, reviewer_department, reviewer_designation):
-                                    st.session_state.review_submitted_message = f"Thank you for your review of {row['Name']}! Rating: {review_rating} ⭐"
-                                    st.session_state.review_restaurant_name = None
-                                    st.rerun()
                             else:
-                                st.warning("Please provide your name and review comments before submitting.", icon="⚠️")
-                    with cancel_col:
-                        if st.button("Cancel", key=f"cancel_review_form_{row['Name']}"):
-                            st.session_state.review_restaurant_name = None
+                                st.error("Failed to save changes.", icon="⚠️")
+                    with col_cancel:
+                        if st.button("Cancel", key=f"cancel_edit_{row['Name']}"):
+                            st.session_state.edit_restaurant_name = None
+                            st.rerun()
+            else:
+                # Original restaurant card display logic
+                with st.container(border=True):
+                    restaurant_name = row['Name']
+
+                    # Load gallery images for the current restaurant
+                    gallery_images = load_gallery_images_from_csv(restaurant_name)
+                    
+                    # Check if a gallery index exists for this restaurant, if not, initialize it to 0
+                    if f'gallery_index_{restaurant_name}' not in st.session_state:
+                        st.session_state[f'gallery_index_{restaurant_name}'] = 0
+
+                    # Display the photo gallery
+                    with st.container():
+                        # The gallery buttons and image are placed in a container for a cohesive look
+                        st.markdown('<div class="fixed-gallery-container">', unsafe_allow_html=True)
+                        if gallery_images:
+                            current_image_index = st.session_state[f'gallery_index_{restaurant_name}']
+                            current_image_data = gallery_images[current_image_index]
+                                
+                            # Use columns to place the buttons on the sides of the image
+                            btn_col_prev, img_col, btn_col_next = st.columns([1, 6, 1])
+
+                            with btn_col_prev:
+                                # Button to go to the previous image, disabled at the first image
+                                if st.button("◀", key=f"prev_{restaurant_name}", disabled=(current_image_index == 0), help="Previous photo"):
+                                    st.session_state[f'gallery_index_{restaurant_name}'] -= 1
+                                    st.rerun()
+                                        
+                            with img_col:
+                                # Display the current image in the central column
+                                st.image(
+                                    f"data:{current_image_data['file_type']};base64,{current_image_data['base64_data']}", 
+                                    use_container_width=True
+                                )
+                                
+                            with btn_col_next:
+                                # Button to go to the next image, disabled at the last image
+                                if st.button("▶", key=f"next_{restaurant_name}", disabled=(current_image_index == len(gallery_images) - 1), help="Next photo"):
+                                    st.session_state[f'gallery_index_{restaurant_name}'] += 1
+                                    st.rerun()
+                                
+                            st.markdown(f'<p style="text-align:center; margin-top: 10px;">{current_image_index + 1} of {len(gallery_images)}</p>', unsafe_allow_html=True)
+
+                        else:
+                            # If no images, show a placeholder inside the fixed container
+                            st.image("https://placehold.co/1600x900/CCCCCC/000000?text=Image+Not+Available", use_container_width=True)
+
+                    private_room_info = f"<strong>Private Room:</strong> {row.get('Private Room', 'N/A')}"
+                    if row.get('Private Room', 'N/A') == "Yes" and pd.notna(row.get('Max Capacity')):
+                        private_room_info += f" (Max Capacity: {int(row['Max Capacity'])})"
+
+                    st.markdown(f"""
+                    <div class="restaurant-card">
+                        <div class="restaurant-name">{row['Name']}</div>
+                        <div class="restaurant-details">
+                            <strong>Cuisine:</strong> {row['Cuisine']}<br>
+                            <strong>Location:</strong> {row['Location']}<br>
+                            <strong>Address:</strong> {row['Address']}<br>
+                            <strong>Rating:</strong> {row['Rating']:.1f} ⭐<br>
+                            <strong>Price:</strong> {row['Price Range']}<br>
+                            {private_room_info}
+                        </div>
+                        <div class="restaurant-description">{row['Description']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                        
+                    # Create a four-column layout for the buttons
+                    btn_col_review, btn_col_menu, btn_col_photo, btn_col_edit = st.columns(4)
+
+                    with btn_col_review:
+                        if st.button("Review", key=f"submit_review_for_{row['Name']}"):
+                            st.session_state.review_restaurant_name = row['Name']
                             st.session_state.review_submitted_message = None
+                            st.session_state.add_menu_for_restaurant = None # Close menu form
+                            st.session_state.add_photo_for_restaurant = None # Close photo upload form
+                            st.session_state.edit_restaurant_name = None # Close edit form
+                            st.rerun()
+                        
+                    with btn_col_menu:
+                        if st.button("Menu", key=f"add_menu_for_{row['Name']}"):
+                            st.session_state.add_menu_for_restaurant = row['Name']
+                            st.session_state.review_restaurant_name = None # Close review form
+                            st.session_state.add_photo_for_restaurant = None # Close photo upload form
+                            st.session_state.edit_restaurant_name = None # Close edit form
                             st.rerun()
 
-                if st.session_state.review_submitted_message and st.session_state.review_restaurant_name is None:
-                    if st.session_state.review_submitted_message.startswith(f"Thank you for your review of {row['Name']}"):
-                        st.success(st.session_state.review_submitted_message, icon="✅")
-                        st.session_state.review_submitted_message = None
+                    with btn_col_photo:
+                        if st.button("Photo", key=f"add_photo_for_{row['Name']}"):
+                            st.session_state.add_photo_for_restaurant = row['Name']
+                            st.session_state.review_restaurant_name = None # Close review form
+                            st.session_state.add_menu_for_restaurant = None # Close menu form
+                            st.session_state.edit_restaurant_name = None # Close edit form
+                            st.rerun()
 
-                with st.expander(f"Past Curated Menus"):
-                    menus = load_menus_from_csv(row['Name'])
-                    if menus:
-                        menu_cols = st.columns(3)
-                        menu_col_index = 0
-                        for menu in menus:
-                            with menu_cols[menu_col_index]:
-                                file_type = menu.get('file_type')
-                                base64_data = menu.get('base64_data')
+                    with btn_col_edit:
+                        if st.button("Edit", key=f"edit_restaurant_{row['Name']}"):
+                            st.session_state.edit_restaurant_name = row['Name']
+                            st.session_state.review_restaurant_name = None
+                            st.session_state.add_menu_for_restaurant = None
+                            st.session_state.add_photo_for_restaurant = None
+                            st.rerun()
+                        
+                    # Display the 'Upload Menu' form if the button was clicked
+                    if st.session_state.add_menu_for_restaurant == row['Name']:
+                        with st.container(border=True):
+                            st.markdown(f"**Upload a new menu for {row['Name']}:**")
+                            uploaded_menu_file = st.file_uploader(
+                                "Upload a menu file (PDF or Image)",
+                                type=["pdf", "png", "jpg", "jpeg"],
+                                key=f"menu_uploader_{row['Name']}"
+                            )
 
-                                # Safely check for file type before processing
-                                if file_type and isinstance(file_type, str) and file_type.startswith('image/'):
-                                    st.write(f"**{menu.get('file_name', 'Menu File')}**")
-                                    st.image(f"data:{file_type};base64,{base64_data}", use_container_width=True)
-                                # Also apply the same check for PDF files
-                                elif file_type and isinstance(file_type, str) and file_type == 'application/pdf':
-                                    st.write(f"**{menu.get('file_name', 'Menu File')}**")
-                                    # Create a download button for the PDF
-                                    st.download_button(
-                                        label="Download PDF",
-                                        data=base64.b64decode(base64_data),
-                                        file_name=menu.get('file_name', 'menu.pdf'),
-                                        mime="application/pdf",
-                                        key=f"download_{menu.get('file_name', 'menu')}_{row['Name']}"
-                                    )
-                                else:
-                                    # Handle cases where file_type is None or an unsupported format
-                                    st.warning(f"Could not display '{menu.get('file_name', 'Menu File')}'. Unsupported file type or missing data.")
-                            menu_col_index = (menu_col_index + 1) % 3
-                    else:
-                        st.info("No curated menus uploaded for this restaurant.")
-                    
-                with st.expander(f"Past Reviews for {row['Name']}"):
-                    reviews = load_reviews_from_csv(row['Name'])
-                    if reviews:
-                        for review in reviews:
-                            # Safely handle the rating to avoid the float format error
-                            review_rating = review.get('rating', 'N/A')
-                            if isinstance(review_rating, (int, float)):
-                                review_rating_str = f"{review_rating:.1f}"
-                            else:
-                                review_rating_str = str(review_rating)
-                                    
-                            st.markdown(f"**Rating:** {review_rating_str} ⭐")
-                            st.write(f"**Review:** {review.get('review_text', 'No review text.')}")
+                            upload_col, cancel_col = st.columns(2)
+                            with upload_col:
+                                if st.button("Upload File", key=f"submit_menu_upload_{row['Name']}"):
+                                    if uploaded_menu_file is not None:
+                                        try:
+                                            file_bytes = uploaded_menu_file.getvalue()
+                                            base64_data = base64.b64encode(file_bytes).decode('utf-8')
+                                            file_name = uploaded_menu_file.name
+                                            file_type = uploaded_menu_file.type
+
+                                            if add_menu_item_to_csv(row['Name'], file_name, file_type, base64_data):
+                                                st.success(f"Menu '{file_name}' uploaded successfully to {row['Name']}!", icon="✅")
+                                                st.session_state.add_menu_for_restaurant = None
+                                                st.cache_data.clear()
+                                                time.sleep(2)
+                                                st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Error processing file: {e}")
+                                    else:
+                                        st.warning("Please select a file to upload.", icon="⚠️")
+                            with cancel_col:
+                                if st.button("Cancel Upload", key=f"cancel_menu_upload_{row['Name']}"):
+                                    st.session_state.add_menu_for_restaurant = None
+                                    st.rerun()
+
+                    # Display the 'Upload Photo' form if the button was clicked
+                    if st.session_state.add_photo_for_restaurant == row['Name']:
+                        with st.container(border=True):
+                            st.markdown(f"**Upload a new photo for {row['Name']}:**")
+                            uploaded_photo_file = st.file_uploader(
+                                "Upload a photo (PNG, JPG, JPEG)",
+                                type=["png", "jpg", "jpeg"],
+                                key=f"photo_uploader_{row['Name']}"
+                            )
                                 
-                            reviewer_info = []
-                            if review.get('reviewer_name'):
-                                reviewer_info.append(review['reviewer_name'])
-                            if review.get('reviewer_department'):
-                                reviewer_info.append(review['reviewer_department'])
-                            if review.get('reviewer_designation'):
-                                reviewer_info.append(review['reviewer_designation'])
-                                
-                            reviewer_line = ", ".join(reviewer_info) if reviewer_info else "Anonymous"
-                                
-                            timestamp = review.get('timestamp', 'N/A')
-                            st.caption(f"By {reviewer_line} on {timestamp}")
-                            st.markdown("---")
-                    else:
-                        st.info("No reviews yet for this restaurant.")
+                            upload_col, cancel_col = st.columns(2)
+                            with upload_col:
+                                if st.button("Upload Photo", key=f"submit_photo_upload_{row['Name']}"):
+                                    if uploaded_photo_file is not None:
+                                        try:
+                                            file_bytes = uploaded_photo_file.getvalue()
+                                            base64_data = base64.b64encode(file_bytes).decode('utf-8')
+                                            file_name = uploaded_photo_file.name
+                                            file_type = uploaded_photo_file.type
+
+                                            if add_gallery_image_to_csv(row['Name'], file_name, file_type, base64_data):
+                                                st.success(f"Photo '{file_name}' uploaded successfully to {row['Name']}'s gallery!", icon="✅")
+                                                st.session_state.add_photo_for_restaurant = None
+                                                st.cache_data.clear()
+                                                time.sleep(2)
+                                                st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Error processing file: {e}")
+                                    else:
+                                        st.warning("Please select a file to upload.", icon="⚠️")
+                            with cancel_col:
+                                if st.button("Cancel Upload", key=f"cancel_photo_upload_{row['Name']}"):
+                                    st.session_state.add_photo_for_restaurant = None
+                                    st.rerun()
+
+                    # Display the 'Submit Review' form if the button was clicked
+                    if st.session_state.review_restaurant_name == row['Name']:
+                        st.markdown(f"**Review for {row['Name']}:**")
+                        reviewer_name = st.text_input("Your Name:", key=f"reviewer_name_{row['Name']}")
+                        reviewer_department = st.text_input("Your Department:", key=f"reviewer_dept_{row['Name']}")
+                        reviewer_designation = st.text_input("Your Designation:", key=f"reviewer_designation_{row['Name']}")
+                        review_rating = st.slider("Rating", 0.0, 5.0, 3.0, 0.5, key=f"review_rating_{row['Name']}")
+                        review_text = st.text_area("Your comments:", key=f"review_text_{row['Name']}")
                             
+                        submit_col, cancel_col = st.columns(2)
+                        with submit_col:
+                            if st.button("Submit", key=f"submit_review_form_{row['Name']}"):
+                                if review_text and reviewer_name:
+                                    if save_review_to_csv(row['Name'], review_rating, review_text, reviewer_name, reviewer_department, reviewer_designation):
+                                        st.session_state.review_submitted_message = f"Thank you for your review of {row['Name']}! Rating: {review_rating} ⭐"
+                                        st.session_state.review_restaurant_name = None
+                                        st.rerun()
+                                else:
+                                    st.warning("Please provide your name and review comments before submitting.", icon="⚠️")
+                        with cancel_col:
+                            if st.button("Cancel", key=f"cancel_review_form_{row['Name']}"):
+                                st.session_state.review_restaurant_name = None
+                                st.session_state.review_submitted_message = None
+                                st.rerun()
+
+                    if st.session_state.review_submitted_message and st.session_state.review_restaurant_name is None:
+                        if st.session_state.review_submitted_message.startswith(f"Thank you for your review of {row['Name']}"):
+                            st.success(st.session_state.review_submitted_message, icon="✅")
+                            st.session_state.review_submitted_message = None
+
+                    with st.expander(f"Past Curated Menus"):
+                        menus = load_menus_from_csv(row['Name'])
+                        if menus:
+                            menu_cols = st.columns(3)
+                            menu_col_index = 0
+                            for menu in menus:
+                                with menu_cols[menu_col_index]:
+                                    file_type = menu.get('file_type')
+                                    base64_data = menu.get('base64_data')
+
+                                    # Safely check for file type before processing
+                                    if file_type and isinstance(file_type, str) and file_type.startswith('image/'):
+                                        st.write(f"**{menu.get('file_name', 'Menu File')}**")
+                                        st.image(f"data:{file_type};base64,{base64_data}", use_container_width=True)
+                                    # Also apply the same check for PDF files
+                                    elif file_type and isinstance(file_type, str) and file_type == 'application/pdf':
+                                        st.write(f"**{menu.get('file_name', 'Menu File')}**")
+                                        # Create a download button for the PDF
+                                        st.download_button(
+                                            label="Download PDF",
+                                            data=base64.b64decode(base64_data),
+                                            file_name=menu.get('file_name', 'menu.pdf'),
+                                            mime="application/pdf",
+                                            key=f"download_{menu.get('file_name', 'menu')}_{row['Name']}"
+                                        )
+                                    else:
+                                        # Handle cases where file_type is None or an unsupported format
+                                        st.warning(f"Could not display '{menu.get('file_name', 'Menu File')}'. Unsupported file type or missing data.")
+                                menu_col_index = (menu_col_index + 1) % 3
+                        else:
+                            st.info("No curated menus uploaded for this restaurant.")
+                        
+                    with st.expander(f"Past Reviews for {row['Name']}"):
+                        reviews = load_reviews_from_csv(row['Name'])
+                        if reviews:
+                            for review in reviews:
+                                # Safely handle the rating to avoid the float format error
+                                review_rating = review.get('rating', 'N/A')
+                                if isinstance(review_rating, (int, float)):
+                                    review_rating_str = f"{review_rating:.1f}"
+                                else:
+                                    review_rating_str = str(review_rating)
+                                        
+                                st.markdown(f"**Rating:** {review_rating_str} ⭐")
+                                st.write(f"**Review:** {review.get('review_text', 'No review text.')}")
+                                    
+                                reviewer_info = []
+                                if review.get('reviewer_name'):
+                                    reviewer_info.append(review['reviewer_name'])
+                                if review.get('reviewer_department'):
+                                    reviewer_info.append(review['reviewer_department'])
+                                if review.get('reviewer_designation'):
+                                    reviewer_info.append(review['reviewer_designation'])
+                                    
+                                reviewer_line = ", ".join(reviewer_info) if reviewer_info else "Anonymous"
+                                    
+                                timestamp = review.get('timestamp', 'N/A')
+                                st.caption(f"By {reviewer_line} on {timestamp}")
+                                st.markdown("---")
+                        else:
+                            st.info("No reviews yet for this restaurant.")
+                                
         col_index = (col_index + 1) % 3
 else:
     st.info("No restaurants found matching your criteria. Please adjust your filters.")
