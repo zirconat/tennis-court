@@ -69,6 +69,38 @@ def initialize_csv_files():
         ])
         initial_gallery_df.to_csv(GALLERY_CSV_FILE, index=False)
 
+# --- NEW FUNCTION: Delete a restaurant entry and all related data ---
+def delete_restaurant(restaurant_name):
+    """
+    Deletes a restaurant and all its associated data from all four CSV files.
+    """
+    try:
+        # Read all dataframes
+        restaurants_df = pd.read_csv(RESTAURANTS_CSV_FILE)
+        reviews_df = pd.read_csv(REVIEWS_CSV_FILE)
+        menus_df = pd.read_csv(MENUS_CSV_FILE)
+        gallery_df = pd.read_csv(GALLERY_CSV_FILE)
+
+        # Filter out the restaurant from each DataFrame
+        restaurants_df = restaurants_df[restaurants_df['Name'] != restaurant_name]
+        reviews_df = reviews_df[reviews_df['restaurant_name'] != restaurant_name]
+        menus_df = menus_df[menus_df['restaurant_name'] != restaurant_name]
+        gallery_df = gallery_df[gallery_df['restaurant_name'] != restaurant_name]
+
+        # Save the updated DataFrames back to CSV
+        restaurants_df.to_csv(RESTAURANTS_CSV_FILE, index=False)
+        reviews_df.to_csv(REVIEWS_CSV_FILE, index=False)
+        menus_df.to_csv(MENUS_CSV_FILE, index=False)
+        gallery_df.to_csv(GALLERY_CSV_FILE, index=False)
+
+        st.success(f"Successfully deleted {restaurant_name} and all associated data.")
+        st.session_state.edit_restaurant_name = None
+        st.cache_data.clear() # Clear the cache to force a reload of the data
+        time.sleep(2)
+        st.rerun()
+    except Exception as e:
+        st.error(f"An error occurred while deleting the restaurant: {e}")
+
 # Call the function to ensure all necessary CSVs exist before running the app
 initialize_csv_files()
 
@@ -98,6 +130,8 @@ if 'is_admin' not in st.session_state:
     st.session_state.is_admin = False
 if 'edit_restaurant_name' not in st.session_state:
     st.session_state.edit_restaurant_name = None
+if 'delete_confirm_restaurant' not in st.session_state:
+    st.session_state.delete_confirm_restaurant = None
 
 # --- Load restaurant data from CSV ---
 @st.cache_data
@@ -744,7 +778,7 @@ if not filtered_df.empty:
                         current_capacity = int(row['Max Capacity']) if pd.notna(row['Max Capacity']) else 10
                         edit_capacity = st.number_input("Max Capacity of Private Room", min_value=1, value=current_capacity, step=1, key=f"edit_capacity_{row['Name']}")
                     
-                    col_save, col_cancel = st.columns([1, 1])
+                    col_save, col_cancel, col_delete = st.columns(3)
                     with col_save:
                         if st.button("Save Changes", key=f"save_changes_{row['Name']}"):
                             # Create a dictionary of updated details
@@ -771,6 +805,23 @@ if not filtered_df.empty:
                         if st.button("Cancel", key=f"cancel_edit_{row['Name']}"):
                             st.session_state.edit_restaurant_name = None
                             st.rerun()
+                    with col_delete:
+                        if st.button("Delete Entry", key=f"delete_button_{row['Name']}"):
+                            st.session_state.delete_confirm_restaurant = row['Name']
+                            st.rerun()
+
+                    # Confirmation dialog for deletion
+                    if st.session_state.delete_confirm_restaurant == row['Name']:
+                        st.warning(f"Are you sure you want to delete **{row['Name']}**? This action cannot be undone.", icon="⚠️")
+                        col_confirm, col_cancel_delete = st.columns(2)
+                        with col_confirm:
+                            if st.button("Confirm Delete", key=f"confirm_delete_{row['Name']}"):
+                                delete_restaurant(row['Name'])
+                        with col_cancel_delete:
+                            if st.button("Cancel", key=f"cancel_delete_confirm_{row['Name']}"):
+                                st.session_state.delete_confirm_restaurant = None
+                                st.rerun()
+
             else:
                 # Original restaurant card display logic
                 with st.container(border=True):
@@ -848,6 +899,7 @@ if not filtered_df.empty:
                             st.session_state.add_menu_for_restaurant = None # Close menu form
                             st.session_state.add_photo_for_restaurant = None # Close photo upload form
                             st.session_state.edit_restaurant_name = None # Close edit form
+                            st.session_state.delete_confirm_restaurant = None
                             st.rerun()
                         
                     with btn_col_menu:
@@ -856,6 +908,7 @@ if not filtered_df.empty:
                             st.session_state.review_restaurant_name = None # Close review form
                             st.session_state.add_photo_for_restaurant = None # Close photo upload form
                             st.session_state.edit_restaurant_name = None # Close edit form
+                            st.session_state.delete_confirm_restaurant = None
                             st.rerun()
 
                     with btn_col_photo:
@@ -864,6 +917,7 @@ if not filtered_df.empty:
                             st.session_state.review_restaurant_name = None # Close review form
                             st.session_state.add_menu_for_restaurant = None # Close menu form
                             st.session_state.edit_restaurant_name = None # Close edit form
+                            st.session_state.delete_confirm_restaurant = None
                             st.rerun()
 
                     with btn_col_edit:
@@ -872,6 +926,7 @@ if not filtered_df.empty:
                             st.session_state.review_restaurant_name = None
                             st.session_state.add_menu_for_restaurant = None
                             st.session_state.add_photo_for_restaurant = None
+                            st.session_state.delete_confirm_restaurant = None
                             st.rerun()
                         
                     # Display the 'Upload Menu' form if the button was clicked
@@ -886,7 +941,7 @@ if not filtered_df.empty:
 
                             upload_col, cancel_col = st.columns(2)
                             with upload_col:
-                                if st.button("Upload File", key=f"submit_menu_upload_{row['Name']}"):
+                                if st.button("Upload menu", key=f"submit_menu_upload_{row['Name']}"):
                                     if uploaded_menu_file is not None:
                                         try:
                                             file_bytes = uploaded_menu_file.getvalue()
@@ -905,7 +960,7 @@ if not filtered_df.empty:
                                     else:
                                         st.warning("Please select a file to upload.", icon="⚠️")
                             with cancel_col:
-                                if st.button("Cancel Upload", key=f"cancel_menu_upload_{row['Name']}"):
+                                if st.button("Cancel", key=f"cancel_menu_upload_{row['Name']}"):
                                     st.session_state.add_menu_for_restaurant = None
                                     st.rerun()
 
@@ -921,7 +976,7 @@ if not filtered_df.empty:
                                 
                             upload_col, cancel_col = st.columns(2)
                             with upload_col:
-                                if st.button("Upload Photo", key=f"submit_photo_upload_{row['Name']}"):
+                                if st.button("Upload photo", key=f"submit_photo_upload_{row['Name']}"):
                                     if uploaded_photo_file is not None:
                                         try:
                                             file_bytes = uploaded_photo_file.getvalue()
@@ -940,7 +995,7 @@ if not filtered_df.empty:
                                     else:
                                         st.warning("Please select a file to upload.", icon="⚠️")
                             with cancel_col:
-                                if st.button("Cancel Upload", key=f"cancel_photo_upload_{row['Name']}"):
+                                if st.button("Cancel", key=f"cancel_photo_upload_{row['Name']}"):
                                     st.session_state.add_photo_for_restaurant = None
                                     st.rerun()
 
