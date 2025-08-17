@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 import time
 import base64
-import io
 import numpy as np
 import re
 
@@ -69,10 +68,11 @@ def initialize_csv_files():
         ])
         initial_gallery_df.to_csv(GALLERY_CSV_FILE, index=False)
 
-# --- NEW FUNCTION: Delete a restaurant entry and all related data ---
+# --- Function to delete a restaurant entry and all related data ---
 def delete_restaurant(restaurant_name):
     """
-    Deletes a restaurant and all its associated data from all four CSV files.
+    Deletes a restaurant and all its associated data from all four CSV files,
+    then forces a Streamlit re-run.
     """
     try:
         # Read all dataframes
@@ -95,8 +95,9 @@ def delete_restaurant(restaurant_name):
 
         st.success(f"Successfully deleted {restaurant_name} and all associated data.")
         st.session_state.edit_restaurant_name = None
-        st.cache_data.clear() # Clear the cache to force a reload of the data
-        time.sleep(2)
+        
+        # --- KEY CHANGE: Clear cache and force re-run ---
+        st.cache_data.clear() 
         st.rerun()
     except Exception as e:
         st.error(f"An error occurred while deleting the restaurant: {e}")
