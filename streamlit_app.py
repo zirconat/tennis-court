@@ -612,8 +612,6 @@ else:
     df = st.session_state.df
     reviews_df = load_reviews_from_csv()
 
-st.sidebar.markdown("---")
-
 st.sidebar.header("Filter Restaurants")
 
 search_query = st.sidebar.text_input("Search by Restaurant Name, Description, or Reviews", "")
