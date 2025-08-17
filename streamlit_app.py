@@ -539,24 +539,28 @@ def find_restaurants(df_restaurants, df_reviews, search_query, selected_cuisine,
 st.markdown('<h1 class="main-header">🍽️ Singapore Restaurant Guide</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align: center; color: #666; font-size: 1.1em; font-family: \'Inter\', sans-serif;">Discover and add the best dining experiences in Singapore!</p>', unsafe_allow_html=True)
     
-# --- Sidebar for File Upload and Filters (Admin-only section) ---
+# --- Sidebar for Admin controls and filtes ---
 
 st.sidebar.caption("For admin use only")
-st.sidebar.header("Data Source")
+st.session_state.is_admin = st.sidebar.checkbox("Enable Admin mode")
+st.sidebar.markdown("---")
+
+if st.session_state.is_admin:
+    st.sidebar.header("Data Source")
         
-uploaded_file = st.sidebar.file_uploader("Upload your own restaurant database (CSV)", type=["csv"], help="Upload a CSV file with 'Name', 'Cuisine', 'Location', 'Rating', 'Price Range', 'Description', 'Image', 'Address', 'Private Room', and 'Max Capacity' columns.")
+    uploaded_file = st.sidebar.file_uploader("Upload your own restaurant database (CSV)", type=["csv"], help="Upload a CSV file with 'Name', 'Cuisine', 'Location', 'Rating', 'Price Range', 'Description', 'Image', 'Address', 'Private Room', and 'Max Capacity' columns.")
         
-if uploaded_file is not None:
-    # Load and validate the uploaded file
-    df_uploaded = pd.read_csv(uploaded_file)
-    st.session_state.df = validate_and_update_dataframe(df_uploaded)
-    st.cache_data.clear()
-else:
-    if st.session_state.df is None:
-        st.session_state.df = load_restaurants()
-    elif 'uploaded_file' in st.session_state and st.session_state.uploaded_file is None:
-        st.session_state.df = load_restaurants()
+    if uploaded_file is not None:
+        # Load and validate the uploaded file
+        df_uploaded = pd.read_csv(uploaded_file)
+        st.session_state.df = validate_and_update_dataframe(df_uploaded)
         st.cache_data.clear()
+    else:
+        if st.session_state.df is None:
+            st.session_state.df = load_restaurants()
+        elif 'uploaded_file' in st.session_state and st.session_state.uploaded_file is None:
+            st.session_state.df = load_restaurants()
+            st.cache_data.clear()
 
     df = st.session_state.df
 
@@ -602,59 +606,63 @@ else:
             mime='text/csv',
             help="Click here to download all submitted gallery images as a CSV file."
         )
+else:
+    if st.session_state.df is None:
+        st.session_state.df = load_restaurants()
+    df = st.session_state.df
+    reviews_df = load_reviews_from_csv()
 
-    st.sidebar.markdown("---")
+st.sidebar.markdown("---")
 
-    st.sidebar.header("Filter Restaurants")
+st.sidebar.header("Filter Restaurants")
 
-    search_query = st.sidebar.text_input("Search by Restaurant Name, Description, or Reviews", "")
+search_query = st.sidebar.text_input("Search by Restaurant Name, Description, or Reviews", "")
 
-    if not df.empty:
-        cuisine_options = ["All"] + sorted(df["Cuisine"].unique().tolist())
-        selected_cuisine = st.sidebar.selectbox("Select Cuisine", cuisine_options)
+if not df.empty:   
+    cuisine_options = ["All"] + sorted(df["Cuisine"].unique().tolist())
+    selected_cuisine = st.sidebar.selectbox("Select Cuisine", cuisine_options)
 
-        location_options = ["All"] + sorted(df["Location"].unique().tolist())
-        selected_location_filter = st.sidebar.selectbox("Select Location", location_options)
+    location_options = ["All"] + sorted(df["Location"].unique().tolist())
+    selected_location_filter = st.sidebar.selectbox("Select Location", location_options)
 
-        price_range_options = ["All", "$", "$$", "$$$", "$$$$"]
-        selected_price_range = st.sidebar.selectbox("Select Price Range", price_range_options)
+    price_range_options = ["All", "$", "$$", "$$$", "$$$$"]
+    selected_price_range = st.sidebar.selectbox("Select Price Range", price_range_options)
 
-        min_rating = st.sidebar.slider("Minimum Rating", 0.0, 5.0, 0.0, 0.1)
+    min_rating = st.sidebar.slider("Minimum Rating", 0.0, 5.0, 0.0, 0.1)
         
-        # Using a hardcoded list to avoid KeyError on a fresh or user-uploaded CSV
-        private_room_options = ["All", "Yes", "No"]
-        selected_private_room_filter = st.sidebar.selectbox("Private Room Available?", private_room_options)
+    # Using a hardcoded list to avoid KeyError on a fresh or user-uploaded CSV
+    private_room_options = ["All", "Yes", "No"]
+    selected_private_room_filter = st.sidebar.selectbox("Private Room Available?", private_room_options)
 
-        min_capacity_filter = None
-        if selected_private_room_filter == "Yes":
-            # Get valid capacities from the DataFrame to set a realistic max value for the slider
-            valid_capacities = df[df['Private Room'] == 'Yes']['Max Capacity'].dropna().tolist()
-            if valid_capacities:
-                max_possible_capacity = int(max(valid_capacities))
-                min_capacity_filter = st.sidebar.slider("Minimum Private Room Capacity", 1, max_possible_capacity, 1)
-            else:
-                st.sidebar.info("No restaurants with private rooms have a capacity specified.")
+    min_capacity_filter = None
+    if selected_private_room_filter == "Yes":
+        # Get valid capacities from the DataFrame to set a realistic max value for the slider
+        valid_capacities = df[df['Private Room'] == 'Yes']['Max Capacity'].dropna().tolist()
+        if valid_capacities:
+            max_possible_capacity = int(max(valid_capacities))
+            min_capacity_filter = st.sidebar.slider("Minimum Private Room Capacity", 1, max_possible_capacity, 1)
+        else:
+            st.sidebar.info("No restaurants with private rooms have a capacity specified.")
 
-        # --- Apply Filters ---
-        filtered_df = df.copy()
-        reviews_df = reviews_df.copy()
+    # --- Apply Filters ---
+    filtered_df = df.copy()
+    reviews_df = reviews_df.copy()
 
-        filtered_df = find_restaurants(
-            df_restaurants=df,
-            df_reviews=reviews_df,
-            search_query=search_query,
-            selected_cuisine=selected_cuisine,
-            selected_location_filter=selected_location_filter,
-            selected_price_range=selected_price_range,
-            min_rating=min_rating,
-            selected_private_room_filter=selected_private_room_filter,
-            min_capacity_filter=min_capacity_filter
-        )
+    filtered_df = find_restaurants(
+        df_restaurants=df,
+        df_reviews=reviews_df,
+        search_query=search_query,
+        selected_cuisine=selected_cuisine,
+        selected_location_filter=selected_location_filter,
+        selected_price_range=selected_price_range,
+        min_rating=min_rating,
+        selected_private_room_filter=selected_private_room_filter,
+        min_capacity_filter=min_capacity_filter
+    )
         
-    else:
-        filtered_df = pd.DataFrame()
+else:
+    filtered_df = pd.DataFrame()
         
-    
     
 # --- Add New Restaurant Button (Regular user) ---
 st.write("Have a new restaurant to include? ")
@@ -889,9 +897,12 @@ if not filtered_df.empty:
                         <div class="restaurant-description">{row['Description']}</div>
                     </div>
                     """, unsafe_allow_html=True)
-                        
-                    # Create a four-column layout for the buttons
-                    btn_col_review, btn_col_menu, btn_col_photo, btn_col_edit = st.columns(4)
+
+                    if st.session_state.is_admin:    
+                        # Create a four-column layout for the buttons
+                        btn_col_review, btn_col_menu, btn_col_photo, btn_col_edit = st.columns(4)
+                    else:
+                        btn_col_review = st.columns(1)[0]
 
                     with btn_col_review:
                         if st.button("Review", key=f"submit_review_for_{row['Name']}"):
@@ -903,35 +914,36 @@ if not filtered_df.empty:
                             st.session_state.delete_confirm_restaurant = None
                             st.rerun()
                         
-                    with btn_col_menu:
-                        if st.button("Menu", key=f"add_menu_for_{row['Name']}"):
-                            st.session_state.add_menu_for_restaurant = row['Name']
-                            st.session_state.review_restaurant_name = None # Close review form
-                            st.session_state.add_photo_for_restaurant = None # Close photo upload form
-                            st.session_state.edit_restaurant_name = None # Close edit form
-                            st.session_state.delete_confirm_restaurant = None
-                            st.rerun()
+                    if st.session_state.is_admin:
+                        with btn_col_menu:
+                            if st.button("Menu", key=f"add_menu_for_{row['Name']}"):
+                                st.session_state.add_menu_for_restaurant = row['Name']
+                                st.session_state.review_restaurant_name = None # Close review form
+                                st.session_state.add_photo_for_restaurant = None # Close photo upload form
+                                st.session_state.edit_restaurant_name = None # Close edit form
+                                st.session_state.delete_confirm_restaurant = None
+                                st.rerun()
 
-                    with btn_col_photo:
-                        if st.button("Photo", key=f"add_photo_for_{row['Name']}"):
-                            st.session_state.add_photo_for_restaurant = row['Name']
-                            st.session_state.review_restaurant_name = None # Close review form
-                            st.session_state.add_menu_for_restaurant = None # Close menu form
-                            st.session_state.edit_restaurant_name = None # Close edit form
-                            st.session_state.delete_confirm_restaurant = None
-                            st.rerun()
+                        with btn_col_photo:
+                            if st.button("Photo", key=f"add_photo_for_{row['Name']}"):
+                                st.session_state.add_photo_for_restaurant = row['Name']
+                                st.session_state.review_restaurant_name = None # Close review form
+                                st.session_state.add_menu_for_restaurant = None # Close menu form
+                                st.session_state.edit_restaurant_name = None # Close edit form
+                                st.session_state.delete_confirm_restaurant = None
+                                st.rerun()
 
-                    with btn_col_edit:
-                        if st.button("Edit", key=f"edit_restaurant_{row['Name']}"):
-                            st.session_state.edit_restaurant_name = row['Name']
-                            st.session_state.review_restaurant_name = None
-                            st.session_state.add_menu_for_restaurant = None
-                            st.session_state.add_photo_for_restaurant = None
-                            st.session_state.delete_confirm_restaurant = None
-                            st.rerun()
+                        with btn_col_edit:
+                            if st.button("Edit", key=f"edit_restaurant_{row['Name']}"):
+                                st.session_state.edit_restaurant_name = row['Name']
+                                st.session_state.review_restaurant_name = None
+                                st.session_state.add_menu_for_restaurant = None
+                                st.session_state.add_photo_for_restaurant = None
+                                st.session_state.delete_confirm_restaurant = None
+                                st.rerun()
                         
                     # Display the 'Upload Menu' form if the button was clicked
-                    if st.session_state.add_menu_for_restaurant == row['Name']:
+                    if st.session_state.is_admin and st.session_state.add_menu_for_restaurant == row['Name']:
                         with st.container(border=True):
                             st.markdown(f"**Upload a new menu for {row['Name']}:**")
                             uploaded_menu_file = st.file_uploader(
@@ -966,7 +978,7 @@ if not filtered_df.empty:
                                     st.rerun()
 
                     # Display the 'Upload Photo' form if the button was clicked
-                    if st.session_state.add_photo_for_restaurant == row['Name']:
+                    if st.session_state.is_admin and st.session_state.add_photo_for_restaurant == row['Name']:
                         with st.container(border=True):
                             st.markdown(f"**Upload a new photo for {row['Name']}:**")
                             uploaded_photo_file = st.file_uploader(
