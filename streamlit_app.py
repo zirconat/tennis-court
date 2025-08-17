@@ -9,6 +9,7 @@ import numpy as np
 import re
 
 # --- CSV File Configuration ---
+# Define the file paths for all data storage.
 RESTAURANTS_CSV_FILE = "restaurants.csv"
 REVIEWS_CSV_FILE = "reviews.csv"
 MENUS_CSV_FILE = "menus.csv"
@@ -68,9 +69,11 @@ def initialize_csv_files():
         ])
         initial_gallery_df.to_csv(GALLERY_CSV_FILE, index=False)
 
+# Call the function to ensure all necessary CSVs exist before running the app
 initialize_csv_files()
 
 # --- Session State Initialization ---
+# Initialize session state variables to manage UI and data flow
 if 'review_restaurant_name' not in st.session_state:
     st.session_state.review_restaurant_name = None
 if 'review_submitted_message' not in st.session_state:
@@ -87,6 +90,12 @@ if 'add_menu_for_restaurant' not in st.session_state:
     st.session_state.add_menu_for_restaurant = None
 if 'add_photo_for_restaurant' not in st.session_state:
     st.session_state.add_photo_for_restaurant = None
+if 'authentication_status' not in st.session_state:
+    st.session_state.authentication_status = None
+if 'username' not in st.session_state:
+    st.session_state.username = None
+if 'is_admin' not in st.session_state:
+    st.session_state.is_admin = False
 
 # --- Load restaurant data from CSV ---
 @st.cache_data
@@ -109,7 +118,7 @@ st.set_page_config(
     page_title="Singapore Restaurant Guide",
     page_icon="🍽️",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # --- Custom CSS for Styling ---
@@ -377,7 +386,7 @@ def load_gallery_images_from_csv(restaurant_name=None):
     except Exception as e:
         st.error(f"Error loading gallery images from CSV: {e}")
         return pd.DataFrame() if not restaurant_name else []
-
+        
 # --- Function to find restaurants based on filters ---
 def find_restaurants(df_restaurants, df_reviews, search_query, selected_cuisine, selected_location_filter, selected_price_range, min_rating, selected_private_room_filter, min_capacity_filter):
     """
@@ -470,16 +479,18 @@ def find_restaurants(df_restaurants, df_reviews, search_query, selected_cuisine,
     
     return filtered_df
 
+
 # --- App Title and Header ---
 st.markdown('<h1 class="main-header">🍽️ Singapore Restaurant Guide</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align: center; color: #666; font-size: 1.1em; font-family: \'Inter\', sans-serif;">Discover and add the best dining experiences in Singapore!</p>', unsafe_allow_html=True)
+    
+# --- Sidebar for File Upload and Filters (Admin-only section) ---
 
-# --- Sidebar for File Upload and Filters ---
 st.sidebar.caption("For admin use only")
 st.sidebar.header("Data Source")
-
+        
 uploaded_file = st.sidebar.file_uploader("Upload your own restaurant database (CSV)", type=["csv"], help="Upload a CSV file with 'Name', 'Cuisine', 'Location', 'Rating', 'Price Range', 'Description', 'Image', 'Address', 'Private Room', and 'Max Capacity' columns.")
-
+        
 if uploaded_file is not None:
     # Load and validate the uploaded file
     df_uploaded = pd.read_csv(uploaded_file)
@@ -492,103 +503,105 @@ else:
         st.session_state.df = load_restaurants()
         st.cache_data.clear()
 
-df = st.session_state.df
+    df = st.session_state.df
 
-if not df.empty:
-    csv_restaurants = df.to_csv(index=False).encode('utf-8')
-    st.sidebar.download_button(
-        label="Download Restaurants",
-        data=csv_restaurants,
-        file_name='restaurants_database.csv',
-        mime='text/csv',
-        help="Click here to download the current list of restaurants as a CSV file."
-    )
+    if not df.empty:
+        csv_restaurants = df.to_csv(index=False).encode('utf-8')
+        st.sidebar.download_button(
+            label="Download Restaurants",
+            data=csv_restaurants,
+            file_name='restaurants_database.csv',
+            mime='text/csv',
+            help="Click here to download the current list of restaurants as a CSV file."
+        )
 
-reviews_df = load_reviews_from_csv()
-if not reviews_df.empty:
-    csv_reviews = reviews_df.to_csv(index=False).encode('utf-8')
-    st.sidebar.download_button(
-        label="Download All Reviews",
-        data=csv_reviews,
-        file_name='restaurant_reviews.csv',
-        mime='text/csv',
-        help="Click here to download all submitted reviews as a CSV file."
-    )
+    reviews_df = load_reviews_from_csv()
+    if not reviews_df.empty:
+        csv_reviews = reviews_df.to_csv(index=False).encode('utf-8')
+        st.sidebar.download_button(
+            label="Download All Reviews",
+            data=csv_reviews,
+            file_name='restaurant_reviews.csv',
+            mime='text/csv',
+            help="Click here to download all submitted reviews as a CSV file."
+        )
+            
+    menus_df = load_menus_from_csv()
+    if not menus_df.empty:
+        csv_menus = menus_df.to_csv(index=False).encode('utf-8')
+        st.sidebar.download_button(
+            label="Download All Menus",
+            data=csv_menus,
+            file_name='restaurant_menus.csv',
+            mime='text/csv',
+            help="Click here to download all submitted menus as a CSV file."
+        )
+            
+    gallery_df = load_gallery_images_from_csv()
+    if not gallery_df.empty:
+        csv_gallery = gallery_df.to_csv(index=False).encode('utf-8')
+        st.sidebar.download_button(
+            label="Download All Gallery Images",
+            data=csv_gallery,
+            file_name='restaurant_gallery.csv',
+            mime='text/csv',
+            help="Click here to download all submitted gallery images as a CSV file."
+        )
+
+    st.sidebar.markdown("---")
+
+    st.sidebar.header("Filter Restaurants")
+
+    search_query = st.sidebar.text_input("Search by Restaurant Name, Description, or Reviews", "")
+
+    if not df.empty:
+        cuisine_options = ["All"] + sorted(df["Cuisine"].unique().tolist())
+        selected_cuisine = st.sidebar.selectbox("Select Cuisine", cuisine_options)
+
+        location_options = ["All"] + sorted(df["Location"].unique().tolist())
+        selected_location_filter = st.sidebar.selectbox("Select Location", location_options)
+
+        price_range_options = ["All", "$", "$$", "$$$", "$$$$"]
+        selected_price_range = st.sidebar.selectbox("Select Price Range", price_range_options)
+
+        min_rating = st.sidebar.slider("Minimum Rating", 0.0, 5.0, 0.0, 0.1)
+        
+        # Using a hardcoded list to avoid KeyError on a fresh or user-uploaded CSV
+        private_room_options = ["All", "Yes", "No"]
+        selected_private_room_filter = st.sidebar.selectbox("Private Room Available?", private_room_options)
+
+        min_capacity_filter = None
+        if selected_private_room_filter == "Yes":
+            # Get valid capacities from the DataFrame to set a realistic max value for the slider
+            valid_capacities = df[df['Private Room'] == 'Yes']['Max Capacity'].dropna().tolist()
+            if valid_capacities:
+                max_possible_capacity = int(max(valid_capacities))
+                min_capacity_filter = st.sidebar.slider("Minimum Private Room Capacity", 1, max_possible_capacity, 1)
+            else:
+                st.sidebar.info("No restaurants with private rooms have a capacity specified.")
+
+        # --- Apply Filters ---
+        filtered_df = df.copy()
+        reviews_df = reviews_df.copy()
+
+        filtered_df = find_restaurants(
+            df_restaurants=df,
+            df_reviews=reviews_df,
+            search_query=search_query,
+            selected_cuisine=selected_cuisine,
+            selected_location_filter=selected_location_filter,
+            selected_price_range=selected_price_range,
+            min_rating=min_rating,
+            selected_private_room_filter=selected_private_room_filter,
+            min_capacity_filter=min_capacity_filter
+        )
+        
+    else:
+        filtered_df = pd.DataFrame()
+        
     
-menus_df = load_menus_from_csv()
-if not menus_df.empty:
-    csv_menus = menus_df.to_csv(index=False).encode('utf-8')
-    st.sidebar.download_button(
-        label="Download All Menus",
-        data=csv_menus,
-        file_name='restaurant_menus.csv',
-        mime='text/csv',
-        help="Click here to download all submitted menus as a CSV file."
-    )
     
-gallery_df = load_gallery_images_from_csv()
-if not gallery_df.empty:
-    csv_gallery = gallery_df.to_csv(index=False).encode('utf-8')
-    st.sidebar.download_button(
-        label="Download All Gallery Images",
-        data=csv_gallery,
-        file_name='restaurant_gallery.csv',
-        mime='text/csv',
-        help="Click here to download all submitted gallery images as a CSV file."
-    )
-
-st.sidebar.markdown("---")
-
-st.sidebar.header("Filter Restaurants")
-
-search_query = st.sidebar.text_input("Search by Restaurant Name, Description, or Reviews", "")
-
-if not df.empty:
-    cuisine_options = ["All"] + sorted(df["Cuisine"].unique().tolist())
-    selected_cuisine = st.sidebar.selectbox("Select Cuisine", cuisine_options)
-
-    location_options = ["All"] + sorted(df["Location"].unique().tolist())
-    selected_location_filter = st.sidebar.selectbox("Select Location", location_options)
-
-    price_range_options = ["All", "$", "$$", "$$$", "$$$$"]
-    selected_price_range = st.sidebar.selectbox("Select Price Range", price_range_options)
-
-    min_rating = st.sidebar.slider("Minimum Rating", 0.0, 5.0, 0.0, 0.1)
-    
-    # Using a hardcoded list to avoid KeyError on a fresh or user-uploaded CSV
-    private_room_options = ["All", "Yes", "No"]
-    selected_private_room_filter = st.sidebar.selectbox("Private Room Available?", private_room_options)
-
-    min_capacity_filter = None
-    if selected_private_room_filter == "Yes":
-        # Get valid capacities from the DataFrame to set a realistic max value for the slider
-        valid_capacities = df[df['Private Room'] == 'Yes']['Max Capacity'].dropna().tolist()
-        if valid_capacities:
-            max_possible_capacity = int(max(valid_capacities))
-            min_capacity_filter = st.sidebar.slider("Minimum Private Room Capacity", 1, max_possible_capacity, 1)
-        else:
-            st.sidebar.info("No restaurants with private rooms have a capacity specified.")
-
-    # --- Apply Filters ---
-    filtered_df = df.copy()
-    reviews_df = reviews_df.copy()
-
-    filtered_df = find_restaurants(
-        df_restaurants=df,
-        df_reviews=reviews_df,
-        search_query=search_query,
-        selected_cuisine=selected_cuisine,
-        selected_location_filter=selected_location_filter,
-        selected_price_range=selected_price_range,
-        min_rating=min_rating,
-        selected_private_room_filter=selected_private_room_filter,
-        min_capacity_filter=min_capacity_filter
-    )
-    
-else:
-    filtered_df = pd.DataFrame()
-
-# --- Add New Restaurant Button ---
+# --- Add New Restaurant Button (Regular user) ---
 st.write("Have a new restaurant to include? ")
 if st.button("➕ Add a New Restaurant"):
     st.session_state.show_add_restaurant_form = True
@@ -601,10 +614,10 @@ if st.session_state.show_add_restaurant_form:
 
         new_name = st.text_input("Restaurant Name", help="The name of the restaurant.")
         new_cuisine = st.text_input("Cuisine", help="e.g., Italian, Japanese, Local Hawker.")
-        
+            
         existing_locations = sorted(df["Location"].unique().tolist()) if not df.empty else []
         locations = existing_locations + ["Add new location..."]
-        
+            
         def handle_location_change():
             if st.session_state.location_selectbox == "Add new location...":
                 st.session_state.new_location_selected = True
@@ -619,12 +632,12 @@ if st.session_state.show_add_restaurant_form:
             on_change=handle_location_change,
             help="Select a pre-existing location or add a new one."
         )
-        
+            
         if st.session_state.new_location_selected:
             final_location = st.text_input("Enter New Location", key="new_location_text_input", help="Type in a new location.")
         else:
             final_location = selected_location
-        
+            
         new_address = st.text_input("Address", help="The full address of the restaurant.")
         new_rating = st.slider("Rating", 0.0, 5.0, 3.0, 0.1, help="Overall rating of the restaurant.")
         new_price = st.selectbox("Price Range", ["$", "$$", "$$$", "$$$$"], index=1, help="$, $$, $$$, or $$$$.")
@@ -634,7 +647,7 @@ if st.session_state.show_add_restaurant_form:
         new_capacity = None
         if new_private_room == "Yes":
             new_capacity = st.number_input("Max Capacity of Private Room", min_value=1, value=10, step=1, help="Maximum number of people the private room can hold.")
-            
+                
         new_image_file = st.file_uploader(
             "Upload an Image",
             type=["png", "jpg", "jpeg"],
@@ -694,11 +707,12 @@ if not filtered_df.empty:
 
                 # Display the photo gallery
                 with st.container():
+                    # The gallery buttons and image are placed in a container for a cohesive look
                     st.markdown('<div class="fixed-gallery-container">', unsafe_allow_html=True)
                     if gallery_images:
                         current_image_index = st.session_state[f'gallery_index_{restaurant_name}']
                         current_image_data = gallery_images[current_image_index]
-                        
+                            
                         # Use columns to place the buttons on the sides of the image
                         btn_col_prev, img_col, btn_col_next = st.columns([1, 6, 1])
 
@@ -707,20 +721,20 @@ if not filtered_df.empty:
                             if st.button("◀", key=f"prev_{restaurant_name}", disabled=(current_image_index == 0), help="Previous photo"):
                                 st.session_state[f'gallery_index_{restaurant_name}'] -= 1
                                 st.rerun()
-                                
+                                    
                         with img_col:
                             # Display the current image in the central column
                             st.image(
                                 f"data:{current_image_data['file_type']};base64,{current_image_data['base64_data']}", 
                                 use_container_width=True
                             )
-                        
+                            
                         with btn_col_next:
                             # Button to go to the next image, disabled at the last image
                             if st.button("▶", key=f"next_{restaurant_name}", disabled=(current_image_index == len(gallery_images) - 1), help="Next photo"):
                                 st.session_state[f'gallery_index_{restaurant_name}'] += 1
                                 st.rerun()
-                        
+                            
                         st.markdown(f'<p style="text-align:center; margin-top: 10px;">{current_image_index + 1} of {len(gallery_images)}</p>', unsafe_allow_html=True)
 
                     else:
@@ -745,7 +759,7 @@ if not filtered_df.empty:
                     <div class="restaurant-description">{row['Description']}</div>
                 </div>
                 """, unsafe_allow_html=True)
-                
+                    
                 # Create a four-column layout for the buttons
                 btn_col1, btn_col2, btn_col3 = st.columns(3)
 
@@ -756,7 +770,7 @@ if not filtered_df.empty:
                         st.session_state.add_menu_for_restaurant = None # Close menu form
                         st.session_state.add_photo_for_restaurant = None # Close photo upload form
                         st.rerun()
-                
+                    
                 with btn_col2:
                     if st.button("Upload Menu", key=f"add_menu_for_{row['Name']}"):
                         st.session_state.add_menu_for_restaurant = row['Name']
@@ -770,7 +784,7 @@ if not filtered_df.empty:
                         st.session_state.review_restaurant_name = None # Close review form
                         st.session_state.add_menu_for_restaurant = None # Close menu form
                         st.rerun()
-                
+                    
                 # Display the 'Upload Menu' form if the button was clicked
                 if st.session_state.add_menu_for_restaurant == row['Name']:
                     with st.container(border=True):
@@ -815,7 +829,7 @@ if not filtered_df.empty:
                             type=["png", "jpg", "jpeg"],
                             key=f"photo_uploader_{row['Name']}"
                         )
-                        
+                            
                         upload_col, cancel_col = st.columns(2)
                         with upload_col:
                             if st.button("Upload Photo", key=f"submit_photo_upload_{row['Name']}"):
@@ -849,7 +863,7 @@ if not filtered_df.empty:
                     reviewer_designation = st.text_input("Your Designation:", key=f"reviewer_designation_{row['Name']}")
                     review_rating = st.slider("Rating", 0.0, 5.0, 3.0, 0.5, key=f"review_rating_{row['Name']}")
                     review_text = st.text_area("Your comments:", key=f"review_text_{row['Name']}")
-                    
+                        
                     submit_col, cancel_col = st.columns(2)
                     with submit_col:
                         if st.button("Submit", key=f"submit_review_form_{row['Name']}"):
@@ -902,7 +916,7 @@ if not filtered_df.empty:
                             menu_col_index = (menu_col_index + 1) % 3
                     else:
                         st.info("No curated menus uploaded for this restaurant.")
-                
+                    
                 with st.expander(f"Past Reviews for {row['Name']}"):
                     reviews = load_reviews_from_csv(row['Name'])
                     if reviews:
@@ -913,10 +927,10 @@ if not filtered_df.empty:
                                 review_rating_str = f"{review_rating:.1f}"
                             else:
                                 review_rating_str = str(review_rating)
-                                
+                                    
                             st.markdown(f"**Rating:** {review_rating_str} ⭐")
                             st.write(f"**Review:** {review.get('review_text', 'No review text.')}")
-                            
+                                
                             reviewer_info = []
                             if review.get('reviewer_name'):
                                 reviewer_info.append(review['reviewer_name'])
@@ -924,15 +938,15 @@ if not filtered_df.empty:
                                 reviewer_info.append(review['reviewer_department'])
                             if review.get('reviewer_designation'):
                                 reviewer_info.append(review['reviewer_designation'])
-                            
+                                
                             reviewer_line = ", ".join(reviewer_info) if reviewer_info else "Anonymous"
-                            
+                                
                             timestamp = review.get('timestamp', 'N/A')
                             st.caption(f"By {reviewer_line} on {timestamp}")
                             st.markdown("---")
                     else:
                         st.info("No reviews yet for this restaurant.")
-                        
+                            
         col_index = (col_index + 1) % 3
 else:
     st.info("No restaurants found matching your criteria. Please adjust your filters.")
